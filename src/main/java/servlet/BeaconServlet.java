@@ -82,10 +82,11 @@ public class BeaconServlet extends HttpServlet {
 				).readLine();
 
 		BeaconEntity be = gson.fromJson(rawJson, BeaconEntity.class);
-		String key = BeaconEntity.GenKey(be.uid, be.major, be.minor);
+		BeaconEntity res = null;
 
 		//lookup tables by id
-		BeaconEntity res = ofy().load().type(BeaconEntity.class).id(key).now();
+		if( be.key != null )
+		res = ofy().load().type(BeaconEntity.class).id(be.key).now();
 
 		//new key or no key
 		if ( res == null ) {
@@ -100,7 +101,6 @@ public class BeaconServlet extends HttpServlet {
 			res.lat = be.lat;
 			res.lng = be.lng;
 			res.touch();
-
 			com.googlecode.objectify.Key<BeaconEntity> k = ofy().save().entity(res).now();
 			dirty = true;
 			gson.toJson( (BeaconEntity)ofy().load().key(k).now(), resp.getWriter());
@@ -111,13 +111,17 @@ public class BeaconServlet extends HttpServlet {
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		if( !req.getParameterMap().isEmpty() ) {
 			String p1 = req.getParameter("key");
+			System.out.println(":> "+p1);
 			if( isValidArg( p1 ) && p1.split(":").length == 3) {
-				ContextEntity res = ofy().load().type(ContextEntity.class).id( Long.parseLong(p1) ).now();
+				BeaconEntity res = ofy().load().type(BeaconEntity.class).id( p1 ).now();
 				if(res != null) {
 					ofy().delete().entity(res).now();
 					dirty = true;
+					resp.setStatus(202);
+					return;
 				}
 			}
+			resp.getWriter().append("No match");
 		}
 	}
 }

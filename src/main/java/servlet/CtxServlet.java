@@ -149,6 +149,7 @@ public class CtxServlet extends HttpServlet {
 				if(res != null) {
 					ofy().delete().entity(res).now();
 					dirty = true;
+					resp.setStatus(202);
 				}
 			}
 		}

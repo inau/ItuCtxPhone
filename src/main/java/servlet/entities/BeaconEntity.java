@@ -12,8 +12,7 @@ public class BeaconEntity {
 	@Id
 	public String key;
 	
-	public long uid;
-	public String major, minor;
+	public String uid, major, minor;
 	
 	@Index public long lat, lng;
 	@Index public Date updated;
@@ -22,7 +21,7 @@ public class BeaconEntity {
 		this.updated = new Date();
 	}
 	
-	public BeaconEntity(long uid, String major, String minor, long lat, long lng) {
+	public BeaconEntity(String uid, String major, String minor, long lat, long lng) {
 		this();
 		this.uid = uid;
 		this.major = major;
@@ -36,7 +35,7 @@ public class BeaconEntity {
 		this.updated = new Date();
 	}
 	
-	public static String GenKey(long uid, String major, String minor) {
+	public static String GenKey(String uid, String major, String minor) {
 		return uid +":"+major+":"+minor;
 	}
 	
