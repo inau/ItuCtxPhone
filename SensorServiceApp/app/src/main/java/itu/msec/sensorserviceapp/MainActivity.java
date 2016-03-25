@@ -17,6 +17,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_main);
 
+        UserLocation.setLatitude(1234);
+        UserLocation.setLongitude(4242);
+
         LinearLayout ll = new LinearLayout(this);
         ServiceButton servBtn = new ServiceButton(this);
         ll.addView(servBtn,

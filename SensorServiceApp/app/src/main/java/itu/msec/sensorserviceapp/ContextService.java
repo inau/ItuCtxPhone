@@ -8,8 +8,14 @@ import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.google.gson.Gson;
+
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import itu.msec.sensorserviceapp.wswrapper.data.entity.ContextEntity;
+import itu.msec.sensorserviceapp.wswrapper.web.ApiAdapter;
 
 /**
  * Created by martinosecchi on 17/03/16.
@@ -23,6 +29,7 @@ public class ContextService extends Service {
     private Thread tempThread;
     private Thread pressThread;
     private Thread soundThread;
+    private int sleepTime = 10000;
 
     public ContextService(){}
 
@@ -30,8 +37,8 @@ public class ContextService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        Sensor pressSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
-        Sensor tempSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
+        final Sensor pressSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+        final Sensor tempSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
 
         if (pressSensor != null) {
             pressMonitor = new PressureMonitor(pressSensor);
@@ -52,13 +59,27 @@ public class ContextService extends Service {
         tempThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                int i = 0; //for testing
-                while (i<10){
-                    Log.i("ContextService - TEMP" , tempMonitor.toString());
+                while (tempSensor != null){
+                    if (UserLocation.getLongitude() != 0 && UserLocation.getLatitude() != 0) {
+                        Log.i("ContextService - TEMP", tempMonitor.toString());
+                        ContextEntity c = new ContextEntity(
+                                (long) UserLocation.getLatitude(),
+                                (long) UserLocation.getLongitude(),
+                                "ambient temperature",
+                                "" + tempMonitor.value
+                        );
+                        Gson gson = new Gson();
+                        String body = gson.toJson(c);
+                        try {
+                            new ApiAdapter<ContextEntity>(ApiAdapter.WebMethod.POST, null, body, null, ContextEntity.class)
+                                    .execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.CONTEXTS, ""));
+                        } catch (MalformedURLException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(sleepTime);
                     } catch( InterruptedException exn){}
-                    i++;
                 }
             }
         });
@@ -66,13 +87,30 @@ public class ContextService extends Service {
         pressThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                int i = 0; //for testing
-                while (i<10){
-                    Log.i("ContextService - PRESS" , pressMonitor.toString());
+                while (pressSensor != null){
+                    if (UserLocation.getLongitude() != 0 && UserLocation.getLatitude() != 0) {
+
+                        Log.i("ContextService - PRESS", pressMonitor.toString());
+
+                        ContextEntity c = new ContextEntity(
+                                (long) UserLocation.getLatitude(),
+                                (long) UserLocation.getLongitude(),
+                                "atmospheric pressure",
+                                "" + pressMonitor.value
+                        );
+                        Gson gson = new Gson();
+                        String body = gson.toJson(c);
+                        try {
+                            new ApiAdapter<ContextEntity>(ApiAdapter.WebMethod.POST, null, body, null, ContextEntity.class)
+                                    .execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.CONTEXTS, ""));
+                        } catch (MalformedURLException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(sleepTime);
                     } catch( InterruptedException exn){}
-                    i++;
                 }
             }
         });
@@ -82,13 +120,42 @@ public class ContextService extends Service {
         soundThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                List samples = new ArrayList();
-                for (int i = 0; i< 10; i++){
-                    samples.add(soundMonitor.getSound());
-                    Log.i( "ContextService - SOUND", "" + samples.get(i) );
-                    try{
-                        Thread.sleep(500);
-                    } catch (InterruptedException exn){}
+                double sum = 0.0, sample;
+                final int count = 10;
+                int i = 0;
+                while (true) {
+                    if (UserLocation.getLongitude() != 0 && UserLocation.getLatitude() != 0) {
+
+                        sum = 0.0;
+                        for (i = 0; i < count; i++) {
+                            sample = soundMonitor.getSound();
+                            Log.i("ContextService - SOUND", "" + sample);
+                            sum += sample;
+                            try {
+                                Thread.sleep(500);
+                            } catch (InterruptedException exn) {
+                            }
+                        }
+                        double value = sum / count; //average noise
+                        ContextEntity c = new ContextEntity(
+                                (long) UserLocation.getLatitude(),
+                                (long) UserLocation.getLongitude(),
+                                "sound",
+                                "" + value
+                        );
+                        Gson gson = new Gson();
+                        String body = gson.toJson(c);
+                        try {
+                            new ApiAdapter<ContextEntity>(ApiAdapter.WebMethod.POST, null, body, null, ContextEntity.class)
+                                    .execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.CONTEXTS, ""));
+                        } catch (MalformedURLException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e){}
                 }
             }
         });
@@ -109,5 +176,8 @@ public class ContextService extends Service {
     @Override
     public void onDestroy(){
         super.onDestroy();
+        tempThread.interrupt();
+        pressThread.interrupt();
+        soundThread.interrupt();
     }
 }
