@@ -9,10 +9,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.google.gson.Gson;
-
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import itu.msec.sensorserviceapp.wswrapper.data.entity.ContextEntity;
 import itu.msec.sensorserviceapp.wswrapper.web.ApiAdapter;

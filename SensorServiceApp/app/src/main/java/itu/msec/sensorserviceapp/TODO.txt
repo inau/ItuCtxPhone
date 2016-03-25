@@ -1,11 +1,18 @@
 
 
+25 Mar
+
+the map part has to tell UserLocation where is the user,
+that would be either the GPS location or the closest ITU (or known) ibeacon location
+
+
+initial
+
 Microphone
 probably using MediaRecorder ? I don't want to record anything though
 follow which approach? research
 maybe AudioRecord, it allows to store raw data in a buffer without saving to a file
 I have the soundmonitor now
-TODO: the getSound() method, I should maybe do some averages over samples every tot seconds of the registration
 maybe in a Thread, using sleep
 
 Location?
