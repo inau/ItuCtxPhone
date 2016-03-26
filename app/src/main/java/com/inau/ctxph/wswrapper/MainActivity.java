@@ -1,14 +1,24 @@
 package com.inau.ctxph.wswrapper;
 
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.FragmentManager;
+import android.net.Uri;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.inau.ctxph.wswrapper.data.entity.BeaconEntity;
 import com.inau.ctxph.wswrapper.data.entity.ContextEntity;
+import com.inau.ctxph.wswrapper.presentation.InfoDialog;
+import com.inau.ctxph.wswrapper.presentation.StatsFragment;
 import com.inau.ctxph.wswrapper.web.ApiAdapter;
 
 import java.net.MalformedURLException;
@@ -17,7 +27,7 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
-public class MainActivity extends Activity implements Observer {
+public class MainActivity extends android.support.v4.app.FragmentActivity implements Observer {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,22 +59,22 @@ public class MainActivity extends Activity implements Observer {
             @Override
             public void onClick(View v) {
                 try {
-                    String body =   "{" +
-                                        "\"lat\":\""+_LAT.getText()+"\"," +
-                                        "\"lng\":\""+_LNG.getText()+"\"," +
-                                        "\"type\":\""+_TYPE.getText()+"\"," +
-                                        "\"values\":\""+_VAL.getText()+"\"" +
-                                    "}";
+                    String body = "{" +
+                            "\"lat\":\"" + _LAT.getText() + "\"," +
+                            "\"lng\":\"" + _LNG.getText() + "\"," +
+                            "\"type\":\"" + _TYPE.getText() + "\"," +
+                            "\"values\":\"" + _VAL.getText() + "\"" +
+                            "}";
                     Map<String, String> headers = new HashMap<String, String>();
-                    headers.put("Content-Type","application/json");
+                    headers.put("Content-Type", "application/json");
 
-                    new ApiAdapter<ContextEntity>(  ApiAdapter.WebMethod.POST,
-                                                    headers,
-                                                    body,
-                                                    MainActivity.this,
-                                                    ContextEntity.class).execute(
-                                                        ApiAdapter.urlBuilder(ApiAdapter.APIS.CONTEXTS, "")
-                                                    );
+                    new ApiAdapter<ContextEntity>(ApiAdapter.WebMethod.POST,
+                            headers,
+                            body,
+                            MainActivity.this,
+                            ContextEntity.class).execute(
+                            ApiAdapter.urlBuilder(ApiAdapter.APIS.CONTEXTS, "")
+                    );
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 }
@@ -79,22 +89,49 @@ public class MainActivity extends Activity implements Observer {
             @Override
             public void onClick(View v) {
                 try {
-                    String body =   "{" +
-                                        "\"lat\":\""+_LAT.getText()+"\"," +
-                                        "\"lng\":\""+_LNG.getText()+"\"," +
-                                        "\"uid\":\""+_UID.getText()+"\"," +
-                                        "\"major\":\""+_MAJ.getText()+"\"," +
-                                        "\"minor\":\""+_MIN.getText()+"\"" +
-                                    "}";
+                    String body = "{" +
+                            "\"lat\":\"" + _LAT.getText() + "\"," +
+                            "\"lng\":\"" + _LNG.getText() + "\"," +
+                            "\"uid\":\"" + _UID.getText() + "\"," +
+                            "\"major\":\"" + _MAJ.getText() + "\"," +
+                            "\"minor\":\"" + _MIN.getText() + "\"" +
+                            "}";
                     Map<String, String> headers = new HashMap<String, String>();
-                    headers.put("Content-Type","application/json");
+                    headers.put("Content-Type", "application/json");
 
-                    new ApiAdapter<BeaconEntity>(   ApiAdapter.WebMethod.POST,
-                                                    headers,
-                                                    body,
-                                                    MainActivity.this,
-                                                    BeaconEntity.class
-                    ).execute( ApiAdapter.urlBuilder(ApiAdapter.APIS.BEACONS, "") );
+                    new ApiAdapter<BeaconEntity>(ApiAdapter.WebMethod.POST,
+                            headers,
+                            body,
+                            MainActivity.this,
+                            BeaconEntity.class
+                    ).execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.BEACONS, ""));
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                    Log.i("ERR", "malformed url");
+                }
+            }
+        });
+
+        findViewById(R.id.popupTest).setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                try {
+                    Map<String, String> headers = new HashMap<String, String>();
+                    headers.put("Content-Type", "application/json");
+
+                    //Check within last day or something
+
+                    new ApiAdapter<ContextEntity>(ApiAdapter.WebMethod.GET,
+                            headers,
+                            null,
+                            MainActivity.this,
+                            ContextEntity.class
+                    ).execute(ApiAdapter.urlBuilderFilter(ApiAdapter.APIS.CONTEXTS,
+                                    Long.parseLong(_LAT.getText().toString()),
+                                    Long.parseLong(_LNG.getText().toString()),
+                                    null)
+                    );
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                     Log.i("ERR", "malformed url");
@@ -106,18 +143,22 @@ public class MainActivity extends Activity implements Observer {
 
     @Override
     public void update(Observable observable, Object data) {
-        if(data instanceof BeaconEntity[]) {
+        if (data instanceof BeaconEntity[]) {
             BeaconEntity[] result = (BeaconEntity[]) data;
             for (BeaconEntity be : result) {
                 Log.i("FOUND", be.key);
             }
-        }
-        else if(data instanceof ContextEntity[]) {
+        } else if (data instanceof ContextEntity[]) {
             ContextEntity[] result = (ContextEntity[]) data;
+            //have something distinguishing the types of results
+            StatsFragment isc = StatsFragment.newInstance(this, "name" , result);
+            isc.show( getSupportFragmentManager(), InfoDialog._DATA_KEY );
+
             for (ContextEntity ce : result) {
-                Log.i("FOUND", ""+ce.uid);
+                Log.i("FOUND", "" + ce.uid);
             }
 
         }
     }
+
 }

@@ -102,4 +102,13 @@
         android:id="@+id/postBeac"
         android:layout_below="@+id/major"
         android:layout_alignParentEnd="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TestPopup"
+        android:id="@+id/popupTest"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="72dp" />
 </RelativeLayout>
