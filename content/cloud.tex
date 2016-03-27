@@ -19,10 +19,37 @@ This would not have been possible if only one context existed per beacon.
 
 The idea is that we select contexts for a specific location and present their change in values over time or do some notifications based on the change in values.
 
-The approach we went with is using the sensed beacons(not to be mistaken with the stored beacon entities) to pinpoint the closest beacon.
+%The approach we went with is using the sensed beacons(not to be mistaken with the stored beacon entities) to pinpoint the closest beacon.
 
-Once the closest beacon has been detected, we look it up in our local cache - if the beacon is not in the local SQLite instance, we look for it in the cloud.
+%Once the closest beacon has been detected, we look it up in our local cache - if the beacon is not in the local SQLite instance, we look for it in the cloud.
 
-In case it doesnt exist in the cloud, we create one using the cloud API, this will respond with the freshly created entity as a result, which is then stored in the local SQLite instance.
+%In case it doesnt exist in the cloud, we create one using the cloud API, this will respond with the freshly created entity as a result, which is then stored in the local SQLite instance.
 
-We have built two java servlets supporting CRUD functionality for both beacons and contexts.
+We have built two java servlets supporting CRUD functionality one for beacons and one for contexts.
+
+They expose the following HTML request types - GET, POST and DELETE.
+
+GET is for retrieval of data, POST is for either creation or merging of data, while DELETE is for deletion of data.
+
+GET and DELETE expect query parameters, while POST expects a payload(body).
+
+\subsubsection{Hosting}
+The webserver is hosted at \textit{http://contextphone.appspot.com/}, the index page presents data currently in the datastore, and some information about the API.
+
+The REST API is hosted at the path 'r/', and each sub table has its corresponding subpath.
+\textit{http://contextphone.appspot.com/r/contexts}\\
+\textit{http://contextphone.appspot.com/r/beacons}
+
+\subsubsection{API cheatsheet}
+
+\textbf{Contexts}
+
+
+\begin{tabular}{l|l}
+\textbf{GET} & \textbf{Query keys:} lat, lng, after, uid\\
+ & for getting contexts at (2,2) after 1.2.2015 use \textbf{'?lat=2\&lng=2\&after=1420156800000'}\\
+ & for getting a single context use \textbf{'?uid=12345678'} to get context with uid 12345678\\
+\textbf{POST} & d\\
+\textbf{DELETE} & f\\
+\end{tabular}
+
