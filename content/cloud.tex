@@ -1,0 +1,28 @@
+\section{The Cloud}
+We are using the Google App Engine to host our cloud, and we use their DataStorage API for persistance(Objectify is the ORM framework we use).
+
+We had a thorough discussion on how exactly beacons and context information should be linked together, we settled on having two tables with no foreign key mappings.\\
+One table for beacon data and one table for context information.\\
+
+The beacon table is as follows:
+\begin{quotation}
+\textbf{Beacon}(\underline{key}, uid, major, minor, lat, lng, updated);
+\end{quotation}
+The key is generated as a combination of the uid, major and minor values, even though there is some redundancy when doing so.
+
+The context table is as follows:
+\begin{quotation}
+\textbf{Context}(\underline{uid}, type, values, lat, lng, updated);
+\end{quotation}
+The idea is that a single location can have multiple contexts. This is due to the fact that the sensors we have chosen make more sense when we can track values over time (sound and pressure).
+This would not have been possible if only one context existed per beacon.
+
+The idea is that we select contexts for a specific location and present their change in values over time or do some notifications based on the change in values.
+
+The approach we went with is using the sensed beacons(not to be mistaken with the stored beacon entities) to pinpoint the closest beacon.
+
+Once the closest beacon has been detected, we look it up in our local cache - if the beacon is not in the local SQLite instance, we look for it in the cloud.
+
+In case it doesnt exist in the cloud, we create one using the cloud API, this will respond with the freshly created entity as a result, which is then stored in the local SQLite instance.
+
+We have built two java servlets supporting CRUD functionality for both beacons and contexts.
