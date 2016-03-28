@@ -1,0 +1,10 @@
+
+
+merge map and beacon part into the project
+
+in the map/beacon part, use UserLocation.setLatitude( .. ) and UserLocation.setLongitude( .. ) to set the users location, either gps or closest known beacon
+
+in map part, handle cases when getLastKnownLocation() returns null by sending location updates requests.
+on location changed, set UserLocation again to either the gps loc. or the closest beacon
+
+add feature for storing new beacons in the cloud when you find them (maybe giving them the location of the user at that moment)
