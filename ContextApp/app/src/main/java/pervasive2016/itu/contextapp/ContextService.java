@@ -8,13 +8,12 @@ import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.google.gson.Gson;
-import java.net.MalformedURLException;
-
 import pervasive2016.itu.contextapp.sensors.PressureMonitor;
 import pervasive2016.itu.contextapp.sensors.SoundMonitor;
 import pervasive2016.itu.contextapp.sensors.TemperatureMonitor;
-import pervasive2016.itu.contextapp.web.ApiAdapter;
+import pervasive2016.itu.contextapp.sensors.background.PressureRunnable;
+import pervasive2016.itu.contextapp.sensors.background.SoundRunnable;
+import pervasive2016.itu.contextapp.sensors.background.TemperatureRunnable;
 
 
 /**

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/mUUIDLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="UUID"
+            android:layout_margin="5dp"
+            />
+        <TextView
+            android:id="@+id/mBeaconUDID"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:text="12345"
+            android:layout_toRightOf="@id/mUUIDLabel"
+            />
+
+
+
+
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/mBeaconUDID"
+        android:id="@+id/mBeaconInfoLayout"
+        >
+        <TextView
+            android:id="@+id/mMajorLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Major:"
+            android:layout_margin="5dp"
+            />
+
+        <TextView
+            android:id="@+id/mBeaconMajor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="5"
+            android:layout_toRightOf="@id/mMajorLabel"
+            android:layout_margin="5dp"
+            />
+
+        <TextView
+            android:id="@+id/mMinorLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Minor:"
+            android:layout_toRightOf="@id/mBeaconMajor"
+            android:layout_margin="5dp"
+            />
+
+        <TextView
+            android:id="@+id/mBeaconMinor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1221"
+            android:layout_toRightOf="@id/mMinorLabel"
+            android:layout_margin="5dp"
+            />
+
+        <TextView
+            android:id="@+id/mDistanceLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Distance:"
+            android:layout_toRightOf="@id/mBeaconMinor"
+            android:layout_margin="5dp"
+            />
+
+        <TextView
+            android:id="@+id/mBeaconDistance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1.5"
+            android:layout_toRightOf="@id/mDistanceLabel"
+            android:layout_margin="5dp"/>
+
+        <TextView
+            android:id="@+id/mBeaconMeter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="m"
+            android:layout_toRightOf="@id/mBeaconDistance"
+            android:layout_margin="5dp"/>
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/mRSSILabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RSSI:"
+        android:layout_margin="5dp"
+        android:layout_below="@id/mBeaconInfoLayout"
+        />
+    <TextView
+        android:id="@+id/mBeaconRSSI"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="-85"
+        android:layout_toRightOf="@id/mRSSILabel"
+        android:layout_below="@id/mBeaconInfoLayout"
+        />
+
+    <TextView
+        android:id="@+id/mBeacondBM"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="dBm"
+        android:layout_below="@id/mBeaconInfoLayout"
+        android:layout_toRightOf="@id/mBeaconRSSI"
+        />
+
+</RelativeLayout>

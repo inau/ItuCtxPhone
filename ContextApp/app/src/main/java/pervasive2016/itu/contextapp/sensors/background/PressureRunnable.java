@@ -1,4 +1,4 @@
-package pervasive2016.itu.contextapp;
+package pervasive2016.itu.contextapp.sensors.background;
 
 import android.util.Log;
 
@@ -6,36 +6,37 @@ import com.google.gson.Gson;
 
 import java.net.MalformedURLException;
 
+import pervasive2016.itu.contextapp.data.UserLocation;
+import pervasive2016.itu.contextapp.data.entity.ContextEntity;
 import pervasive2016.itu.contextapp.sensors.PressureMonitor;
-import pervasive2016.itu.contextapp.sensors.TemperatureMonitor;
 import pervasive2016.itu.contextapp.web.ApiAdapter;
 
 /**
  * Created by martinosecchi on 28/03/16.
  */
-public class TemperatureRunnable implements Runnable {
-    private TemperatureMonitor tempMonitor;
+public class PressureRunnable implements Runnable {
+    private PressureMonitor pressMonitor;
     private int sleepTime;
-    public TemperatureRunnable( TemperatureMonitor temperatureMonitor){
-        this.tempMonitor = temperatureMonitor;
+    public PressureRunnable( PressureMonitor pressureMonitor){
+        this.pressMonitor = pressureMonitor;
         this.sleepTime = 10000; // 10 seconds
     }
-    public TemperatureRunnable( TemperatureMonitor temperatureMonitor, int sleepTime){
-        this.tempMonitor = temperatureMonitor;
+    public PressureRunnable( PressureMonitor pressureMonitor, int sleepTime){
+        this.pressMonitor = pressureMonitor;
         this.sleepTime = sleepTime;
     }
     @Override
     public void run() {
-        while (tempMonitor.getSensor() != null){
+        while (pressMonitor.getSensor() != null){
             if (UserLocation.getLongitude() != 0 && UserLocation.getLatitude() != 0) {
 
-                Log.i("ContextService - TEMP", tempMonitor.toString());
+                Log.i("ContextService - PRESS", pressMonitor.toString());
 
                 ContextEntity c = new ContextEntity(
                         (long) UserLocation.getLatitude(),
                         (long) UserLocation.getLongitude(),
-                        "ambient temperature",
-                        "" + tempMonitor.value
+                        "atmospheric pressure",
+                        "" + pressMonitor.value
                 );
                 Gson gson = new Gson();
                 String body = gson.toJson(c);

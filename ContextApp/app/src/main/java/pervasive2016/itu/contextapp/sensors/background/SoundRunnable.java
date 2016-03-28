@@ -1,4 +1,4 @@
-package pervasive2016.itu.contextapp;
+package pervasive2016.itu.contextapp.sensors.background;
 
 import android.util.Log;
 
@@ -6,6 +6,8 @@ import com.google.gson.Gson;
 
 import java.net.MalformedURLException;
 
+import pervasive2016.itu.contextapp.data.UserLocation;
+import pervasive2016.itu.contextapp.data.entity.ContextEntity;
 import pervasive2016.itu.contextapp.sensors.SoundMonitor;
 import pervasive2016.itu.contextapp.web.ApiAdapter;
 

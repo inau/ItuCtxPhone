@@ -1,22 +1,13 @@
-package pervasive2016.itu.contextapp;
+package pervasive2016.itu.contextapp.presentation;
 
-import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -33,6 +24,9 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import pervasive2016.itu.contextapp.R;
+import pervasive2016.itu.contextapp.data.entity.ContextEntity;
 
 /**
  * Created by Ivan on 26-Mar-16.

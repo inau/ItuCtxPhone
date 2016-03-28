@@ -1,4 +1,4 @@
-package pervasive2016.itu.contextapp;
+package pervasive2016.itu.contextapp.data.entity;
 
 import java.util.Date;
 
