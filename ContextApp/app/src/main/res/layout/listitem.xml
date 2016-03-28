@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
-              android:layout_height="match_parent">
+              android:layout_height="wrap_content"
+    android:background="@android:drawable/picture_frame"
+    >
 
         <TextView
             android:id="@+id/mUUIDLabel"
@@ -116,6 +118,15 @@
         android:text="dBm"
         android:layout_below="@id/mBeaconInfoLayout"
         android:layout_toRightOf="@id/mBeaconRSSI"
+        />
+
+    <ImageButton
+        android:id="@+id/mLwAdd"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_width="50dip"
+        android:layout_height="50dip"
+        android:background="@android:drawable/ic_input_add"
         />
 
 </RelativeLayout>

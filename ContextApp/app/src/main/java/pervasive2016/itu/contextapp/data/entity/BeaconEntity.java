@@ -31,8 +31,6 @@ public class BeaconEntity {
     private int Rssi;
 
     public BeaconEntity(){
-        Longitude = 12.0;
-        Latitude = 55.0;
     }
 
     public void setUUID(String s){
@@ -95,7 +93,11 @@ public class BeaconEntity {
 
     public int getRssi(){ return Rssi;}
 
-    public void setBeaconValue(BeaconEntity e){
+    /**
+     * Maps to known ITU beacons following the pattern that 'major' = floor and 'minor' = Letter+room
+     * @param e
+     */
+    public void setToKnownItuBeaconLocation(BeaconEntity e){
         UUID = e.getUUID();
         Major = e.getMajor();
         Minor = e.getMinor();
@@ -376,6 +378,8 @@ public class BeaconEntity {
                                 Longitude = 12.591541;
                                 Latitude = 55.659879;
                                 break;
+                            default:
+                                break;
                         }
                         break;
                     case "2"://Region B
@@ -394,6 +398,7 @@ public class BeaconEntity {
                         Longitude = 12.590691;
                         Latitude = 55.659327;
                         break;
+                    default: break;
 
                 }
                 break;
@@ -490,6 +495,7 @@ public class BeaconEntity {
                                 Longitude = 12.591541;
                                 Latitude = 55.659877;
                                 break;
+                            default: break;
                         }
                         break;
                     case "2"://Region B
@@ -508,11 +514,13 @@ public class BeaconEntity {
                         Longitude = 12.590691;
                         Latitude = 55.659327;
                         break;
+                    default: break;
                 }
                 break;
             default:
-                Longitude = 12.591299;
-                Latitude = 55.659626;
+                //Longitude = 12.591299;
+                //Latitude = 55.659626; THIS MAKES THE BEACON MAPPING ONLY EVER WORK @ ITU
+                // DEFAULT should be not to set values at all
                 break;
         }
     }
@@ -523,5 +531,22 @@ public class BeaconEntity {
 
     public void setUpdated(Date updated) {
         this.updated = updated;
+    }
+
+    public String getKey() {
+        return getUUID()+"_"+getMajor()+"_"+getMinor();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o instanceof BeaconEntity) {
+        return this.getKey().equals( ((BeaconEntity)o).getKey() );
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return getKey().hashCode();
     }
 }

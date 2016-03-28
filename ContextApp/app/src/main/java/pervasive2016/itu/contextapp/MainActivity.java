@@ -1,15 +1,14 @@
 package pervasive2016.itu.contextapp;
 
 import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.RemoteException;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.ToggleButton;
+
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.Region;
@@ -21,26 +20,38 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Queue;
+import java.util.Set;
+import java.util.Stack;
+import java.util.concurrent.BlockingQueue;
 
-import pervasive2016.itu.contextapp.data.DatabaseHelper;
 import pervasive2016.itu.contextapp.data.ListViewAdapter;
+import pervasive2016.itu.contextapp.data.UserLocation;
 import pervasive2016.itu.contextapp.data.entity.BeaconEntity;
 import pervasive2016.itu.contextapp.web.ApiAdapter;
 
 public class MainActivity extends Activity implements BeaconConsumer, Observer {
-    protected static final String TAG = "MAIN";
+    public static final int NEW_BEACON_ACTIVITY = 1314123;
+    public static final String TAG = "MAIN";
+    public static final String[] keys = {"uid","major","minor","lat", "lng"};
     private BeaconManager beaconManager;
+
     ListView mListView;
     ListViewAdapter mListViewAdapter;
-    List<BeaconEntity> mListBeaconEntity = new ArrayList<BeaconEntity>();
+
     BeaconEntity closestBeacon = new BeaconEntity();
-    SQLiteDatabase database = null;
-    DatabaseHelper helper = null;
-    BeaconEntity []mListBeaconFromServer;
+
+    BeaconEntity[] mListBeaconFromServer;
+    List<BeaconEntity> newBeacons = new ArrayList<>();
+
+    Map<String, Double> distances = new HashMap<>();
+
     int storedOnServer = 0;
 
     @Override
@@ -48,52 +59,48 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mListView = (ListView)findViewById(R.id.listViewBeacon);
-        mListViewAdapter = new ListViewAdapter(this.getBaseContext(),mListBeaconEntity);
-        mListView.setAdapter(mListViewAdapter);
+        requestBeaconsFromWeb();
 
         beaconManager = BeaconManager.getInstanceForApplication(this);
-
         beaconManager.getBeaconParsers().add(new BeaconParser().
                 setBeaconLayout("m:0-3=4c000215,i:4-19,i:20-21,i:22-23,p:24-24"));
-        //beaconManager.bind(this);
 
-        helper = new DatabaseHelper(this);
-        database = helper.getWritableDatabase();
-        mListBeaconEntity.clear();
-
-        findViewById(R.id.start_scan).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.toggleScan).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                closestBeacon.setDistance(1000000.0);
-                beaconManager.bind(MainActivity.this);
-                Log.i(TAG, "Service button presses");
-            }
-        });
-
-
-        //service onDestroy callback method will be called
-        findViewById(R.id.stop_scan).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                beaconManager.unbind(MainActivity.this);
-                try{
-                    beaconManager.stopRangingBeaconsInRegion(new Region("E3B54450-AB73-4D79-85D6-519EAF0F45D9", null, null, null));
-                }catch (RemoteException e){
-
+                ToggleButton btn = (ToggleButton) v;
+                if (btn.isChecked()) {
+                    Log.i(TAG, "ON");
+                    closestBeacon.setDistance(1000000.0);
+                    beaconManager.bind(MainActivity.this);
+                } else {
+                    Log.i(TAG, "OFF");
+                    beaconManager.unbind(MainActivity.this);
+                    try {
+                        beaconManager.stopRangingBeaconsInRegion(new Region("E3B54450-AB73-4D79-85D6-519EAF0F45D9", null, null, null));
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         });
 
+        //service onDestroy callback method will be called
         findViewById(R.id.beaconLocate).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                for(BeaconEntity be :mListBeaconEntity){
-                    if(Integer.parseInt(be.getMajor()) <= 5 &&
+                for (BeaconEntity be : mListBeaconFromServer) {
+                    String bkey = be.getKey();
+                    String skey = closestBeacon.getKey();
+                    be.setDistance(distances.get(bkey));
+                    be.setDistance(be.getDistance() == null ? Integer.MAX_VALUE : be.getDistance());
+                    closestBeacon.setDistance(distances.get(skey));
+                    closestBeacon.setDistance(closestBeacon.getDistance() == null ?
+                            Integer.MAX_VALUE : closestBeacon.getDistance());
+                    if (Integer.parseInt(be.getMajor()) <= 5 &&
                             Integer.parseInt(be.getMajor()) > 0 &&
-                            closestBeacon.getDistance() > be.getDistance()){
-                        closestBeacon.setBeaconValue(be);
+                            closestBeacon.getDistance() > be.getDistance()) {
+                        closestBeacon.setToKnownItuBeaconLocation(be);
                     }
                 }
                 Intent intent = new Intent(MainActivity.this, LocationChangeActivity.class);
@@ -105,34 +112,24 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
             }
         });
 
-        try {
-            new ApiAdapter<BeaconEntity>(ApiAdapter.WebMethod.GET,
-                    null, null,
-                    MainActivity.this, BeaconEntity.class)
-                    .execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.BEACONS, ""));
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
         Log.i(TAG, "ONCreAte CALL");
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         beaconManager.unbind(this);
-        database.close();
-        mListBeaconEntity.clear();
         Log.i(TAG, "Database close");
     }
 
-    private void updateUI(){
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mListViewAdapter.notifyDataSetChanged();
-            }
-        });
+    private void requestBeaconsFromWeb(){
+                try {
+                    ApiAdapter.getApihandlerBCS(MainActivity.this, null, ApiAdapter.WebMethod.GET)
+                            .execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.BEACONS, ""));
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
     }
 
 
@@ -148,131 +145,107 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                     bc.setMinor(b.getId3().toString());
                     bc.setDistance(b.getDistance());
                     bc.setRssi(b.getRssi());
-                    bc.setBeaconValue(bc);//set position of beacon base on Major and Minor
+                    bc.setToKnownItuBeaconLocation(bc);//set position of beacon base on Major and Minor
+
 
                     Log.i(TAG, "Beacon information is " + b.getId1() + " " +
                                     b.getId2() + " " + b.getId3() + " distance = " + b.getDistance()
                     );
 
+                    //Beacon without location (non-itu most likely)
+                    if (bc.getLatitude() == null || bc.getLongtitude() == null) {
+                        boolean exists = false;
 
-                    int count = 0;
-                    for (BeaconEntity be : mListBeaconEntity) {
-                        if (be.getUUID().equals(bc.getUUID()) &&
-                                be.getMajor().equals(bc.getMajor()) &&
-                                be.getMinor().equals(bc.getMinor())) {//update list
-                            be.setDistance(bc.getDistance());
-                            be.setRssi(bc.getRssi());
-                            count = 1;
-                        }
-                    }
+                        //iterate through existing beacons from ws
+                        for (BeaconEntity be : mListBeaconFromServer) {
+                            if (be.getKey().equals(bc.getKey())) { //update list
+                                distances.put(be.getKey(), bc.getDistance());
 
-                    if (count == 0) {//&& Integer.parseInt(bc.getMajor()) <= 5 && Integer.parseInt(bc.getMajor()) > 0
-                        mListBeaconEntity.add(bc);//Add beacon on the display list
-                        // Save BEACON ON CLOUD
-
-                        //Find if beacon stored on server
-                        storedOnServer = 0;
-                        for(BeaconEntity it: mListBeaconFromServer){
-                            if(it.getUUID().equals(bc.getUUID()) &&
-                                    it.getMajor().equals(bc.getMajor()) &&
-                                    it.getMinor().equals(bc.getMinor())){
-                                storedOnServer = 1;
+                                //update local values
+                                be.setDistance(bc.getDistance());
+                                be.setRssi(bc.getRssi());
+                                exists = true;
+                                break;
                             }
                         }
 
-
-                        String mKey = bc.getUUID() + bc.getMajor() + bc.getMinor();
-                        String query = "SELECT * from " + DatabaseHelper.getTableName() +
-                                " WHERE _key = " + "'" + mKey + "'";
-
-                        Log.i("XXXXXXXX", "Query = " + query);
-
-                        Cursor mCursor = database.rawQuery(query, null);
-
-
-                        Log.i("XXXXXXXX", "cursor = " + mCursor.getCount());
-                        if(mCursor.getCount() <= 0 && storedOnServer == 0){//not stored on both database and server
-                            //STORE BEACON TO CLOUD
-
-                            try{
-                                String body =   "{" +
-                                        "\"lat\":\""+bc.getLatitude().toString()+"\"," +
-                                        "\"lng\":\""+bc.getLongtitude().toString()+"\"," +
-                                        "\"uid\":\""+bc.getUUID()+"\"," +
-                                        "\"major\":\""+bc.getMajor()+"\"," +
-                                        "\"minor\":\""+bc.getMinor()+ "\"" +
-                                        "}";
-
-                                Map<String, String> headers = new HashMap<String, String>();
-                                headers.put("Content-Type","application/json");
-
-
-                                new ApiAdapter<BeaconEntity>(ApiAdapter.WebMethod.POST,
-                                        headers,//headers or null
-                                        body,//body or null
-                                        MainActivity.this,
-                                        BeaconEntity.class
-                                ).execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.BEACONS, ""));
-
-                                Log.i("OOOOOOOOOOOO", "key = " +  "?key=" +
-                                        bc.getUUID() +":" + bc.getMajor() + ":" +bc.getMinor());
-
-
-                                ContentValues values = new ContentValues();
-                                values.put("_uid", bc.getUUID());
-                                values.put("_major", bc.getMajor());
-                                values.put("_minor", bc.getMinor());
-                                values.put("_lat", bc.getLatitude());
-                                values.put("_lng", bc.getLongtitude());
-                                values.put("_key", bc.getUUID() + bc.getMajor() + bc.getMinor());
-                                database.insert(DatabaseHelper.getTableName(), null, values);
-                                Log.i("JJJJJJJJJJJJJ", " value added: lat = " + bc.getLatitude() + " lng = " + bc.getLongtitude());
-                                mCursor.close();
-
-
-                            } catch (MalformedURLException e){
-                                e.printStackTrace();
-                            }catch (IOException e){
-                                e.printStackTrace();
+                        if (!exists) {
+                            //START ACTIVITY FOR RESULT
+                            if( !newBeacons.contains(bc) ) {
+                                newBeacons.add(bc);
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mListViewAdapter.notifyDataSetChanged();
+                                    }
+                                });
                             }
-
                         }
-
                     }
 
+                    Log.i(TAG, " -----------------END LOOP --------------");
+                    requestBeaconsFromWeb();
                 }
-                Log.i(TAG, " -----------------END LOOP --------------");
-
-                updateUI();
-                //mListViewAdapter.notifyDataSetChanged();
             }
         });
 
         try {
             beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
-            // Ranging ID = "E3B54450-AB73-4D79-85D6-519EAF0F45D9"
-            //beaconManager.setForegroundScanPeriod(800);
-            //beaconManager.setBackgroundScanPeriod(1000);
         } catch (RemoteException e) {    }
 
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if( requestCode == NEW_BEACON_ACTIVITY ) {
+            if(resultCode != RESULT_OK) return;
+            Bundle ex = data.getExtras();
+            newBeacons.remove( ex.getInt("pos") );
+            try{
+                Log.i("RESULT", "Received activity result");
+                String body =   "{" +
+                        "\""+keys[0]+"\":\""+ ex.get(keys[0]) +"\"," +
+                        "\""+keys[1]+"\":\""+ ex.get(keys[1])+"\"," +
+                        "\""+keys[2]+"\":\""+ ex.get(keys[2])+"\"," +
+                        "\""+keys[3]+"\":\""+ ex.get(keys[3])+"\"," +
+                        "\""+keys[4]+"\":\""+ ex.get(keys[4])+"\"" +
+                        "}";
+
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("Content-Type", "application/json");
+
+                new ApiAdapter<BeaconEntity>(ApiAdapter.WebMethod.POST,
+                        headers,//headers or null
+                        body,//body or null
+                        MainActivity.this,
+                        BeaconEntity.class
+                ).execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.BEACONS, ""));
+
+            } catch (MalformedURLException e){
+                e.printStackTrace();
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
     public void update(Observable observable, Object data) {
         if(data instanceof BeaconEntity[]) {
             mListBeaconFromServer = (BeaconEntity[]) data;
+            if(mListViewAdapter == null) {
+                //only display new beacons
+                mListView = (ListView)findViewById(R.id.listViewBeacon);
+                mListViewAdapter = new ListViewAdapter(this.getBaseContext(), newBeacons);
+                mListView.setAdapter(mListViewAdapter);
+            }
+            mListViewAdapter.notifyDataSetChanged();
+
             for (BeaconEntity be : mListBeaconFromServer) {
                 Log.i("GGGGGGGGG FOUND ", be.getUUID() +"-" + be.getMajor() + "-"  + be.getMinor()+"-"
                         + be.getLatitude() + "-" + be.getLongtitude());
             }
         }
-        /*else if(data instanceof ContextEntity[]) {
-            ContextEntity[] result = (ContextEntity[]) data;
-            for (ContextEntity ce : result) {
-                //Log.i("FOUND", ""+ce.uid);
-            }
-
-        }*/
     }
 
 
