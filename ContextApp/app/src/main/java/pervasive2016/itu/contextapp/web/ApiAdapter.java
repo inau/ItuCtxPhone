@@ -21,6 +21,9 @@ import java.util.Observer;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import pervasive2016.itu.contextapp.data.entity.BeaconEntity;
+import pervasive2016.itu.contextapp.data.entity.ContextEntity;
+
 /**
  * Created by Ivan on 22-Mar-16.
  */
@@ -125,6 +128,18 @@ public class ApiAdapter<T> extends AsyncTask<URL, Long, T[]>{
     /****************************************************************************
      Helper classes
      ****************************************************************************/
+    //factories
+    public static ApiAdapter<ContextEntity> getApihandlerCTX(Observer obs, String body, WebMethod webm) {
+        return new ApiAdapter<ContextEntity>(webm,
+                null, body,
+                obs, ContextEntity.class);
+    }
+    public static ApiAdapter<BeaconEntity> getApihandlerBCS(Observer obs, String body, WebMethod webm) {
+        return new ApiAdapter<BeaconEntity>(webm,
+                null, body,
+                obs, BeaconEntity.class);
+    }
+
     public enum APIS {
         CONTEXTS(remoteIP+"r/contexts"),
         BEACONS(remoteIP+"r/beacons");

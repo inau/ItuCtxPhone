@@ -40,6 +40,7 @@ public class PressureRunnable implements Runnable {
                 );
                 Gson gson = new Gson();
                 String body = gson.toJson(c);
+                Log.i("Monitor Body", body);
                 try {
                     new ApiAdapter<ContextEntity>(ApiAdapter.WebMethod.POST, null, body, null, ContextEntity.class)
                             .execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.CONTEXTS, ""));

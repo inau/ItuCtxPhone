@@ -2,6 +2,7 @@ package pervasive2016.itu.contextapp;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
@@ -13,6 +14,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -20,11 +22,15 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.IndoorBuilding;
+import com.google.android.gms.maps.model.IndoorLevel;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,29 +49,15 @@ import pervasive2016.itu.contextapp.web.ApiAdapter;
  * Created by DIEM NGUYEN HOANG on 3/18/2016.
  * Co written by Ivan
  */
-public class LocationChangeActivity extends FragmentActivity implements Observer, LocationListener, OnMapReadyCallback {
+public class LocationChangeActivity extends FragmentActivity implements GoogleMap.OnIndoorStateChangeListener, Observer, LocationListener, OnMapReadyCallback {
     final static String TAG = "LOCATIONLISTENER";
     GoogleMap googleMap;
-    Double mClosestLongitude;
-    Double mClosestLatitude;
-    String mMajor;
-    String mMinor;
-    String room;
+
+    String mClosestKey;
+    ComponentName caller;
+
     volatile String lastClick;
-
     Map<String, BeaconEntity> markerData = new HashMap<>();
-
-    //factories
-    private ApiAdapter<ContextEntity> getApihandlerCTX() {
-        return new ApiAdapter<ContextEntity>(ApiAdapter.WebMethod.GET,
-                null, null,
-                LocationChangeActivity.this, ContextEntity.class);
-    }
-    private ApiAdapter<BeaconEntity> getApihandlerBCS() {
-        return new ApiAdapter<BeaconEntity>(ApiAdapter.WebMethod.GET,
-                null, null,
-                LocationChangeActivity.this, BeaconEntity.class);
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,14 +67,12 @@ public class LocationChangeActivity extends FragmentActivity implements Observer
         int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getBaseContext());
 
         Intent intent = getIntent();
-        mClosestLongitude = intent.getDoubleExtra("longitude", 0);
-        mClosestLatitude = intent.getDoubleExtra("latitude", 0);
-        mMajor = intent.getStringExtra("major");
-        mMinor = intent.getStringExtra("minor");
+        caller = getCallingActivity();
+        Log.i("CALL", "?"+caller);
 
-        Log.i(TAG, "Major = " + mMajor + " minor = " + mMinor + " lng = " + mClosestLongitude + " lat = " + mClosestLatitude);
+        mClosestKey = intent.getStringExtra("key");
 
-        room = minorToRoom(mMinor);
+        Log.i(TAG, "Beacon key = " + mClosestKey);
 
         // Showing status
         if (status != ConnectionResult.SUCCESS) { // Google Play Services are not available
@@ -102,27 +92,32 @@ public class LocationChangeActivity extends FragmentActivity implements Observer
             //googleMap = fm.getMapAsync(this);
 
         }
+
+        if( caller != null ) return;
+        startService( new Intent(this, ContextService.class));
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if( caller != null ) return;
+        stopService(new Intent(this, ContextService.class));
+    }
+
     @Override
     public void onLocationChanged(Location location) {
+        if( caller != null ) return;
         // Getting latitude of the current location
         double latitude = location.getLatitude();
 
         // Getting longitude of the current location
         double longitude = location.getLongitude();
 
-
         UserLocation.setLatitude(latitude);
-        UserLocation.setLatitude(longitude);
+        UserLocation.setLongitude(longitude);
 
         // Creating a LatLng object for the current location
         LatLng latLng = new LatLng(latitude, longitude);
-
-        googleMap.addMarker(new MarkerOptions()
-                .position(new LatLng(mClosestLatitude, mClosestLongitude))
-                .title(mMajor + room));
-
-        Log.i(TAG, "Marker longlat = " + mClosestLongitude + "," + mClosestLatitude);
     }
 
     @Override
@@ -178,12 +173,33 @@ public class LocationChangeActivity extends FragmentActivity implements Observer
             }
         }
 
-        try {
-            getApihandlerBCS().execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.BEACONS, ""));
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
+        UserLocation.setLatitude( location.getLatitude() );
+        UserLocation.setLongitude( location.getLongitude());
+
+        centerOnLocation(new LatLng(location.getLatitude(), location.getLongitude()));
+        googleMap.setOnIndoorStateChangeListener(this);
+
+        if( caller != null ) {
+            final Intent i = LocationChangeActivity.this.getIntent();
+
+            Toast.makeText(LocationChangeActivity.this,
+                    "Do a long click on the map to set coordinates for the new beacon",
+                    Toast.LENGTH_SHORT)
+                    .show();
+
+            googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+                @Override
+                public void onMapLongClick(LatLng latLng) {
+                    i.putExtra(MainActivity.keys[3], latLng.latitude);
+                    i.putExtra(MainActivity.keys[4], latLng.longitude);
+                    setResult(RESULT_OK, i);
+                    finish();
+                }
+            });
+            return; //skip adding beacons
         }
 
+        requestAllBeacons();
 
         googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -191,12 +207,16 @@ public class LocationChangeActivity extends FragmentActivity implements Observer
                 BeaconEntity be = markerData.get(marker.getId());
                 lastClick = marker.getId();
                 try {
-                    getApihandlerCTX().execute(ApiAdapter.urlBuilderFilter(ApiAdapter.APIS.CONTEXTS,
-                                    be.getLatitude().longValue(),
-                                    be.getLongtitude().longValue(),
-                                    DayAgo()
-                            )
-                    );
+                    Log.i("Marker", "Request " + be.getLatitude().longValue() + " " + be.getLongtitude().longValue());
+                    ApiAdapter
+                            .getApihandlerCTX(LocationChangeActivity.this, null, ApiAdapter.WebMethod.GET)
+                            .execute(ApiAdapter
+                                            .urlBuilderFilter(ApiAdapter.APIS.CONTEXTS,
+                                                    be.getLatitude().longValue(),
+                                                    be.getLongtitude().longValue(),
+                                                    DayAgo()
+                                            )
+                            );
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 }
@@ -204,14 +224,38 @@ public class LocationChangeActivity extends FragmentActivity implements Observer
             }
         });
 
-        centerOnLocation(new LatLng(location.getLatitude(), location.getLongitude()));
 
         Log.i(TAG, "Google Play Services ARe available");
     }
 
+
+    private void requestAllBeacons() {
+        try {
+            ApiAdapter
+                    .getApihandlerBCS(LocationChangeActivity.this, null, ApiAdapter.WebMethod.GET)
+                    .execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.BEACONS, ""));
+            Log.i("MarkFetch", "ALL beacons");
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void requestNearbyBeacons() {
+        try {
+            URL url = ApiAdapter.urlBuilderFilter(ApiAdapter.APIS.BEACONS,
+                    (long) UserLocation.getLatitude(), (long) UserLocation.getLongitude(), null);
+            Log.i("MarkFetch", url.getPath() + url.getQuery() );
+            ApiAdapter
+                    .getApihandlerBCS(LocationChangeActivity.this, null, ApiAdapter.WebMethod.GET)
+                    .execute( url );
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     private void centerOnLocation(LatLng coords) {
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(coords));
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(coords, 18));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(coords, 18));
     }
 
     public void clearMapMarkers() {
@@ -220,19 +264,47 @@ public class LocationChangeActivity extends FragmentActivity implements Observer
             googleMap.clear();
     }
 
+    private void addClosestBeacon(BeaconEntity be) {
+        Marker m = googleMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(be.getLatitude(), be.getLongtitude()))
+                        .title(be.getMajor() + minorToRoom(be.getMinor()))
+                        .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_online))
+        );
+        markerData.put(m.getId(), be);
+    }
+
     public void addBeaconMarker(BeaconEntity beacon) {
         Log.i("MAP", "add marker triggered");
         if(googleMap != null){
             Log.i("MAP", "not null");
+            if( googleMap.isIndoorEnabled() ) {
+                Log.i("MAPL", "Indoor");
+                IndoorBuilding building = googleMap.getFocusedBuilding();
+                if(building != null) {
+                    Log.i("MAPL", "Building");
+                    List<IndoorLevel> levels = building.getLevels();
+                    int i = building.getActiveLevelIndex();
 
-            Log.i("MAPR", beacon.getMajor() + " " + beacon.getMinor());
-            Log.i("MAPR", beacon.getMajor() + " " + minorToRoom(beacon.getMinor()));
+                    if(!((5 - Integer.parseInt( beacon.getMajor() )) == i)) return;
+                    final Marker m = googleMap.addMarker(new MarkerOptions()
+                                    .position(new LatLng(beacon.getLatitude(), beacon.getLongtitude()))
+                                    .title("" + beacon.getMajor() + minorToRoom(beacon.getMinor()))
+                                .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_invisible))
+                    );
+                    markerData.put(m.getId(), beacon);
+                }
 
-            final Marker m = googleMap.addMarker( new MarkerOptions()
-                            .position(new LatLng(beacon.getLatitude(), beacon.getLongtitude()))
-                            .title( ""+beacon.getMajor() + minorToRoom( beacon.getMinor() ) )
-            );
-            markerData.put(m.getId(), beacon);
+            else {
+                final Marker m = googleMap.addMarker(new MarkerOptions()
+                                .position(new LatLng(beacon.getLatitude(), beacon.getLongtitude()))
+                                .title("" + beacon.getMajor() + minorToRoom(beacon.getMinor()))
+                                .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_invisible))
+                );
+                markerData.put(m.getId(), beacon);
+            }
+            }
+
+
         }
     }
 
@@ -270,8 +342,21 @@ public class LocationChangeActivity extends FragmentActivity implements Observer
         }
         else if(data instanceof BeaconEntity[] ) {
             BeaconEntity[] res = (BeaconEntity[]) data;
+            Log.i("BCR", "#" + res.length );
             for (BeaconEntity be : res)
-                addBeaconMarker(be);
+                if( be.getKey().equals(mClosestKey) ) addClosestBeacon(be);
+                else addBeaconMarker(be);
         }
+    }
+
+    @Override
+    public void onIndoorBuildingFocused() {
+
+    }
+
+    @Override
+    public void onIndoorLevelActivated(IndoorBuilding indoorBuilding) {
+        clearMapMarkers();
+        requestAllBeacons();
     }
 }

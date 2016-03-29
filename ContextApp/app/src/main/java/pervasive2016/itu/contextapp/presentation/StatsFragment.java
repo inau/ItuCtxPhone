@@ -126,9 +126,11 @@ public class StatsFragment extends DialogFragment {
 
         BarDataSet ds1 = new BarDataSet(sound, "Sound Levels");
         ds1.setColors( new int[]{ColorTemplate.VORDIPLOM_COLORS[0]} );
+        ds1.setDrawValues(false);
         set[0] = ds1;
         BarDataSet ds2 = new BarDataSet(pres, "Pressure Levels");
         ds2.setColors(new int[]{ColorTemplate.VORDIPLOM_COLORS[3]});
+        ds2.setDrawValues(false);
         set[1] = ds2;
 
         BarData[] d = new BarData[]{new BarData(  soundLbl, ds1), new BarData(presLbl, ds2)};
