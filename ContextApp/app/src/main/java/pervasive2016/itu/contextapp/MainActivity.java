@@ -6,6 +6,7 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ToggleButton;
 
@@ -42,6 +43,7 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
     public static final String[] keys = {"uid","major","minor","lat", "lng"};
     private BeaconManager beaconManager;
 
+    Button beaconLocate;
     ListView mListView;
     ListViewAdapter mListViewAdapter;
 
@@ -82,33 +84,37 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
             }
         });
 
-        //service onDestroy callback method will be called
-        findViewById(R.id.beaconLocate).setOnClickListener(new View.OnClickListener() {
+        beaconLocate = (Button) findViewById(R.id.beaconLocate);
+        beaconLocate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-              /**  for (BeaconEntity be : nearbyBeacons) {
-                    String bkey = be.getKey();
-                    String skey = closestBeacon.getKey();
+                /**  for (BeaconEntity be : nearbyBeacons) {
+                 String bkey = be.getKey();
+                 String skey = closestBeacon.getKey();
 
-                    be.setDistance( distances.get(bkey) );
-                    be.setDistance(be.getDistance() == null ? Integer.MAX_VALUE : be.getDistance());
+                 be.setDistance( distances.get(bkey) );
+                 be.setDistance(be.getDistance() == null ? Integer.MAX_VALUE : be.getDistance());
 
-                    closestBeacon.setDistance( distances.get(skey) );
-                    closestBeacon.setDistance(closestBeacon.getDistance() == null ?
-                            Integer.MAX_VALUE : closestBeacon.getDistance());
+                 closestBeacon.setDistance( distances.get(skey) );
+                 closestBeacon.setDistance(closestBeacon.getDistance() == null ?
+                 Integer.MAX_VALUE : closestBeacon.getDistance());
 
-                    if (Integer.parseInt(be.getMajor()) <= 5 &&
-                            Integer.parseInt(be.getMajor()) > 0 &&
-                            closestBeacon.getDistance() < be.getDistance()) {
-                        closestBeacon = be;
-                    }
-                }**/
+                 if (Integer.parseInt(be.getMajor()) <= 5 &&
+                 Integer.parseInt(be.getMajor()) > 0 &&
+                 closestBeacon.getDistance() < be.getDistance()) {
+                 closestBeacon = be;
+                 }
+                 }**/
                 Intent intent = new Intent(MainActivity.this, LocationChangeActivity.class);
                 BeaconEntity closestBeacon = UserLocation.getNearestBeacon();
                 intent.putExtra("key", closestBeacon.getKey());
                 startActivity(intent);
             }
         });
+        if(UserLocation.getNearestBeacon() == null) {
+            beaconLocate.setClickable(false);
+            beaconLocate.setAlpha(0.2f);
+        }
 
         Log.i(TAG, "ONCreAte CALL");
 
@@ -178,11 +184,19 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                             }
                         }
 
-                        if(UserLocation.getNearestBeacon() == null) UserLocation.setNearestBeacon(bc);
-                        else UserLocation
-                                .setNearestBeacon(
-                                        UserLocation.getNearestBeacon().getDistance() < bc.getDistance()
-                                        ? UserLocation.getNearestBeacon() : bc);
+                        if(UserLocation.getNearestBeacon() == null) {
+                            UserLocation.setNearestBeacon(bc);
+                            beaconLocate.setClickable(true);
+                            beaconLocate.setAlpha(1f);
+                        }
+                        else {
+                            UserLocation
+                                    .setNearestBeacon(
+                                            UserLocation.getNearestBeacon().getDistance() < bc.getDistance()
+                                                    ? UserLocation.getNearestBeacon() : bc);
+                            beaconLocate.setClickable(true);
+                            beaconLocate.setAlpha(1f);
+                        }
                     }
 
                     Log.i(TAG, " -----------------END LOOP --------------");
@@ -252,7 +266,3 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
 
 
 }
-
-
-
-//-----------------------------------------------------------------------------------------
