@@ -93,12 +93,14 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
 
         }
 
+        if( caller != null ) return;
         startService( new Intent(this, ContextService.class));
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if( caller != null ) return;
         stopService(new Intent(this, ContextService.class));
     }
 
@@ -170,6 +172,10 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
                 location = l;
             }
         }
+
+        UserLocation.setLatitude( location.getLatitude() );
+        UserLocation.setLongitude( location.getLongitude());
+
         centerOnLocation(new LatLng(location.getLatitude(), location.getLongitude()));
         googleMap.setOnIndoorStateChangeListener(this);
 
@@ -201,6 +207,7 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
                 BeaconEntity be = markerData.get(marker.getId());
                 lastClick = marker.getId();
                 try {
+                    Log.i("Marker", "Request " + be.getLatitude().longValue() + " " + be.getLongtitude().longValue());
                     ApiAdapter
                             .getApihandlerCTX(LocationChangeActivity.this, null, ApiAdapter.WebMethod.GET)
                             .execute(ApiAdapter
@@ -227,6 +234,7 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
             ApiAdapter
                     .getApihandlerBCS(LocationChangeActivity.this, null, ApiAdapter.WebMethod.GET)
                     .execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.BEACONS, ""));
+            Log.i("MarkFetch", "ALL beacons");
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }

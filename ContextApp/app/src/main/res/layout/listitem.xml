@@ -9,7 +9,8 @@
             android:id="@+id/mUUIDLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="UUID"
+            android:text="UUID:"
+            android:textStyle="bold"
             android:layout_margin="5dp"
             />
         <TextView
@@ -21,22 +22,14 @@
             android:layout_toRightOf="@id/mUUIDLabel"
             />
 
-
-
-
-
-    <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/mBeaconUDID"
-        android:id="@+id/mBeaconInfoLayout"
-        >
-        <TextView
+     <TextView
             android:id="@+id/mMajorLabel"
+         android:textStyle="bold"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Major:"
             android:layout_margin="5dp"
+         android:layout_below="@id/mBeaconUDID"
             />
 
         <TextView
@@ -46,6 +39,7 @@
             android:text="5"
             android:layout_toRightOf="@id/mMajorLabel"
             android:layout_margin="5dp"
+            android:layout_below="@id/mBeaconUDID"
             />
 
         <TextView
@@ -53,8 +47,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Minor:"
+            android:textStyle="bold"
             android:layout_toRightOf="@id/mBeaconMajor"
             android:layout_margin="5dp"
+            android:layout_below="@id/mBeaconUDID"
             />
 
         <TextView
@@ -64,41 +60,17 @@
             android:text="1221"
             android:layout_toRightOf="@id/mMinorLabel"
             android:layout_margin="5dp"
+            android:layout_below="@id/mBeaconUDID"
             />
-
-        <TextView
-            android:id="@+id/mDistanceLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Distance:"
-            android:layout_toRightOf="@id/mBeaconMinor"
-            android:layout_margin="5dp"
-            />
-
-        <TextView
-            android:id="@+id/mBeaconDistance"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="1.5"
-            android:layout_toRightOf="@id/mDistanceLabel"
-            android:layout_margin="5dp"/>
-
-        <TextView
-            android:id="@+id/mBeaconMeter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="m"
-            android:layout_toRightOf="@id/mBeaconDistance"
-            android:layout_margin="5dp"/>
-    </RelativeLayout>
 
     <TextView
         android:id="@+id/mRSSILabel"
+        android:textStyle="bold"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="RSSI:"
         android:layout_margin="5dp"
-        android:layout_below="@id/mBeaconInfoLayout"
+        android:layout_below="@id/mBeaconMinor"
         />
     <TextView
         android:id="@+id/mBeaconRSSI"
@@ -106,8 +78,8 @@
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
         android:text="-85"
+        android:layout_below="@id/mBeaconMinor"
         android:layout_toRightOf="@id/mRSSILabel"
-        android:layout_below="@id/mBeaconInfoLayout"
         />
 
     <TextView
@@ -116,7 +88,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
         android:text="dBm"
-        android:layout_below="@id/mBeaconInfoLayout"
+        android:layout_below="@id/mBeaconMinor"
         android:layout_toRightOf="@id/mBeaconRSSI"
         />
 
@@ -128,5 +100,36 @@
         android:layout_height="50dip"
         android:background="@android:drawable/ic_input_add"
         />
+
+    <TextView
+        android:textStyle="bold"
+        android:id="@+id/mDistanceLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Distance:"
+        android:layout_margin="5dp"
+        android:layout_toRightOf="@id/mBeacondBM"
+        android:layout_below="@id/mBeaconMinor"
+        />
+
+
+    <TextView
+        android:id="@+id/mBeaconDistance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="1.5"
+        android:layout_toRightOf="@id/mDistanceLabel"
+        android:layout_below="@id/mBeaconMinor"
+        android:layout_margin="5dp"/>
+
+    <TextView
+        android:id="@+id/mBeaconMeter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="m"
+        android:layout_toRightOf="@id/mBeaconDistance"
+        android:layout_below="@id/mBeaconMinor"
+        android:layout_margin="5dp"/>
+
 
 </RelativeLayout>
