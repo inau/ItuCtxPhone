@@ -47,7 +47,7 @@ import pervasive2016.itu.contextapp.web.ApiAdapter;
 
 /**
  * Created by DIEM NGUYEN HOANG on 3/18/2016.
- * Co written by Ivan
+ * Heavily modified by Ivan
  */
 public class LocationChangeActivity extends FragmentActivity implements GoogleMap.OnIndoorStateChangeListener, Observer, LocationListener, OnMapReadyCallback {
     final static String TAG = "LOCATIONLISTENER";
@@ -113,8 +113,7 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
         // Getting longitude of the current location
         double longitude = location.getLongitude();
 
-        UserLocation.setLatitude(latitude);
-        UserLocation.setLongitude(longitude);
+        updateUserLocation(latitude, longitude);
 
         // Creating a LatLng object for the current location
         LatLng latLng = new LatLng(latitude, longitude);
@@ -173,8 +172,7 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
             }
         }
 
-        UserLocation.setLatitude( location.getLatitude() );
-        UserLocation.setLongitude( location.getLongitude());
+        updateUserLocation( location.getLatitude(), location.getLongitude() );
 
         centerOnLocation(new LatLng(location.getLatitude(), location.getLongitude()));
         googleMap.setOnIndoorStateChangeListener(this);
@@ -228,7 +226,6 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
         Log.i(TAG, "Google Play Services ARe available");
     }
 
-
     private void requestAllBeacons() {
         try {
             ApiAdapter
@@ -244,15 +241,14 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
         try {
             URL url = ApiAdapter.urlBuilderFilter(ApiAdapter.APIS.BEACONS,
                     (long) UserLocation.getLatitude(), (long) UserLocation.getLongitude(), null);
-            Log.i("MarkFetch", url.getPath() + url.getQuery() );
+            Log.i("MarkFetch", url.getPath() + url.getQuery());
             ApiAdapter
                     .getApihandlerBCS(LocationChangeActivity.this, null, ApiAdapter.WebMethod.GET)
-                    .execute( url );
+                    .execute(url);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
     }
-
 
     private void centerOnLocation(LatLng coords) {
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(coords, 18));
@@ -331,6 +327,12 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
         Calendar c = Calendar.getInstance();
         c.add(Calendar.DAY_OF_YEAR, -1);
         return c.getTime();
+    }
+
+    private void updateUserLocation(double lat, double lng) {
+        UserLocation.setLatitude( lat );
+        UserLocation.setLongitude( lng );
+        Log.i("LOC", "UserLocation Set to (" + UserLocation.getLatitude() + ", " + UserLocation.getLongitude() + ")");
     }
 
     @Override
