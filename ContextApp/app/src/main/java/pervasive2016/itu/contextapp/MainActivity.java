@@ -45,8 +45,6 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
     ListView mListView;
     ListViewAdapter mListViewAdapter;
 
-    BeaconEntity closestBeacon = new BeaconEntity();
-
     BeaconEntity[] mListBeaconFromServer;
     List<BeaconEntity> newBeacons = new ArrayList<>();
 
@@ -71,7 +69,6 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                 ToggleButton btn = (ToggleButton) v;
                 if (btn.isChecked()) {
                     Log.i(TAG, "ON");
-                    closestBeacon.setDistance(1000000.0);
                     beaconManager.bind(MainActivity.this);
                 } else {
                     Log.i(TAG, "OFF");
@@ -89,25 +86,26 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
         findViewById(R.id.beaconLocate).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                for (BeaconEntity be : mListBeaconFromServer) {
+              /**  for (BeaconEntity be : nearbyBeacons) {
                     String bkey = be.getKey();
                     String skey = closestBeacon.getKey();
-                    be.setDistance(distances.get(bkey));
+
+                    be.setDistance( distances.get(bkey) );
                     be.setDistance(be.getDistance() == null ? Integer.MAX_VALUE : be.getDistance());
-                    closestBeacon.setDistance(distances.get(skey));
+
+                    closestBeacon.setDistance( distances.get(skey) );
                     closestBeacon.setDistance(closestBeacon.getDistance() == null ?
                             Integer.MAX_VALUE : closestBeacon.getDistance());
+
                     if (Integer.parseInt(be.getMajor()) <= 5 &&
                             Integer.parseInt(be.getMajor()) > 0 &&
-                            closestBeacon.getDistance() > be.getDistance()) {
-                        closestBeacon.setToKnownItuBeaconLocation(be);
+                            closestBeacon.getDistance() < be.getDistance()) {
+                        closestBeacon = be;
                     }
-                }
+                }**/
                 Intent intent = new Intent(MainActivity.this, LocationChangeActivity.class);
-                intent.putExtra("longitude", closestBeacon.getLongtitude());
-                intent.putExtra("latitude", closestBeacon.getLatitude());
-                intent.putExtra("major", closestBeacon.getMajor());
-                intent.putExtra("minor", closestBeacon.getMinor());
+                BeaconEntity closestBeacon = UserLocation.getNearestBeacon();
+                intent.putExtra("key", closestBeacon.getKey());
                 startActivity(intent);
             }
         });
@@ -147,7 +145,6 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                     bc.setRssi(b.getRssi());
                     bc.setToKnownItuBeaconLocation(bc);//set position of beacon base on Major and Minor
 
-
                     Log.i(TAG, "Beacon information is " + b.getId1() + " " +
                                     b.getId2() + " " + b.getId3() + " distance = " + b.getDistance()
                     );
@@ -158,7 +155,7 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
 
                         //iterate through existing beacons from ws
                         for (BeaconEntity be : mListBeaconFromServer) {
-                            if (be.getKey().equals(bc.getKey())) { //update list
+                            if (be.getKey().equals(bc.getKey())) { //IF exists in WS
                                 distances.put(be.getKey(), bc.getDistance());
 
                                 //update local values
@@ -170,7 +167,6 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                         }
 
                         if (!exists) {
-                            //START ACTIVITY FOR RESULT
                             if( !newBeacons.contains(bc) ) {
                                 newBeacons.add(bc);
                                 runOnUiThread(new Runnable() {
@@ -181,6 +177,12 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                                 });
                             }
                         }
+
+                        if(UserLocation.getNearestBeacon() == null) UserLocation.setNearestBeacon(bc);
+                        else UserLocation
+                                .setNearestBeacon(
+                                        UserLocation.getNearestBeacon().getDistance() < bc.getDistance()
+                                        ? UserLocation.getNearestBeacon() : bc);
                     }
 
                     Log.i(TAG, " -----------------END LOOP --------------");

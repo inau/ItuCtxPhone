@@ -9,7 +9,7 @@ public class ContextEntity {
     public final Long uid;
     public final String type, values;
     public final Date updated;
-    public final long lat, lng;
+    public final double lat, lng;
 
     public ContextEntity(Long uid, long lat, long lng, String type, String values, Date updated) {
         this.updated = updated;
@@ -22,6 +22,10 @@ public class ContextEntity {
 
     public ContextEntity(long lat, long lng, String type, String values) {
         this(null, lat, lng, type, values, null);
+    }
+
+    public ContextEntity(Double lat, Double lng, String type, String values) {
+        this(null, lat.longValue(), lng.longValue(), type, values, null);
     }
 
 }

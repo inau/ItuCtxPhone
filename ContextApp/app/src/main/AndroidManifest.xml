@@ -17,13 +17,17 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyC_3o2n_9p74UMMh631fcry-CUs1XIhiyE"/>
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity"
+            android:screenOrientation="portrait"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".LocationChangeActivity"/>
+        <activity android:name=".LocationChangeActivity"
+            android:screenOrientation="portrait"
+            />
         <service android:name=".ContextService"
             android:enabled="true"
             android:exported="true"

@@ -30,6 +30,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -52,13 +53,8 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
     final static String TAG = "LOCATIONLISTENER";
     GoogleMap googleMap;
 
-    Double mClosestLongitude;
-    Double mClosestLatitude;
-    String mMajor;
-    String mMinor;
+    String mClosestKey;
     ComponentName caller;
-
-    String room;
 
     volatile String lastClick;
     Map<String, BeaconEntity> markerData = new HashMap<>();
@@ -74,14 +70,9 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
         caller = getCallingActivity();
         Log.i("CALL", "?"+caller);
 
-        mClosestLongitude = intent.getDoubleExtra("longitude", 0);
-        mClosestLatitude = intent.getDoubleExtra("latitude", 0);
-        mMajor = intent.getStringExtra("major");
-        mMinor = intent.getStringExtra("minor");
+        mClosestKey = intent.getStringExtra("key");
 
-        Log.i(TAG, "Major = " + mMajor + " minor = " + mMinor + " lng = " + mClosestLongitude + " lat = " + mClosestLatitude);
-
-        room = minorToRoom(mMinor);
+        Log.i(TAG, "Beacon key = " + mClosestKey);
 
         // Showing status
         if (status != ConnectionResult.SUCCESS) { // Google Play Services are not available
@@ -125,14 +116,6 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
 
         // Creating a LatLng object for the current location
         LatLng latLng = new LatLng(latitude, longitude);
-
-        googleMap.addMarker(new MarkerOptions()
-                        .position(new LatLng(mClosestLatitude, mClosestLongitude))
-                        .title(mMajor + room)
-                        //.icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_online))
-        );
-
-        Log.i(TAG, "Marker longlat = " + mClosestLongitude + "," + mClosestLatitude);
     }
 
     @Override
@@ -251,10 +234,12 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
 
     private void requestNearbyBeacons() {
         try {
+            URL url = ApiAdapter.urlBuilderFilter(ApiAdapter.APIS.BEACONS,
+                    (long) UserLocation.getLatitude(), (long) UserLocation.getLongitude(), null);
+            Log.i("MarkFetch", url.getPath() + url.getQuery() );
             ApiAdapter
                     .getApihandlerBCS(LocationChangeActivity.this, null, ApiAdapter.WebMethod.GET)
-                    .execute(ApiAdapter.urlBuilderFilter(ApiAdapter.APIS.BEACONS,
-                            (long)UserLocation.getLatitude(), (long)UserLocation.getLongitude(), null) );
+                    .execute( url );
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -269,6 +254,15 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
         if(googleMap != null)
             markerData.clear();
             googleMap.clear();
+    }
+
+    private void addClosestBeacon(BeaconEntity be) {
+        Marker m = googleMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(be.getLatitude(), be.getLongtitude()))
+                        .title(be.getMajor() + minorToRoom(be.getMinor()))
+                        .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_online))
+        );
+        markerData.put(m.getId(), be);
     }
 
     public void addBeaconMarker(BeaconEntity beacon) {
@@ -287,6 +281,7 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
                     final Marker m = googleMap.addMarker(new MarkerOptions()
                                     .position(new LatLng(beacon.getLatitude(), beacon.getLongtitude()))
                                     .title("" + beacon.getMajor() + minorToRoom(beacon.getMinor()))
+                                .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_invisible))
                     );
                     markerData.put(m.getId(), beacon);
                 }
@@ -295,6 +290,7 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
                 final Marker m = googleMap.addMarker(new MarkerOptions()
                                 .position(new LatLng(beacon.getLatitude(), beacon.getLongtitude()))
                                 .title("" + beacon.getMajor() + minorToRoom(beacon.getMinor()))
+                                .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_invisible))
                 );
                 markerData.put(m.getId(), beacon);
             }
@@ -340,7 +336,8 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
             BeaconEntity[] res = (BeaconEntity[]) data;
             Log.i("BCR", "#" + res.length );
             for (BeaconEntity be : res)
-                addBeaconMarker(be);
+                if( be.getKey().equals(mClosestKey) ) addClosestBeacon(be);
+                else addBeaconMarker(be);
         }
     }
 
