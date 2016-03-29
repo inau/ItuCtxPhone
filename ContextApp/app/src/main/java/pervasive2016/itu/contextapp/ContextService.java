@@ -77,6 +77,9 @@ public class ContextService extends Service {
     @Override
     public void onDestroy(){
         super.onDestroy();
+        tempMonitor.setSensor(null);
+        pressMonitor.setSensor(null);
+        soundMonitor.setGoing(false);
         tempThread.interrupt();
         pressThread.interrupt();
         soundThread.interrupt();

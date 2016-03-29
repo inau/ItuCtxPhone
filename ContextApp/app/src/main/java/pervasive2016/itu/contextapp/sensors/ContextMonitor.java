@@ -13,7 +13,7 @@ public abstract class ContextMonitor implements SensorEventListener{
     private int id;
     private String type;
 
-    private Sensor sensor;
+    private volatile Sensor sensor;
 
     protected void setId(){
         id = COUNT;

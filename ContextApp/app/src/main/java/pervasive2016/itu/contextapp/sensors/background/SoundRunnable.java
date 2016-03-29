@@ -30,9 +30,9 @@ public class SoundRunnable implements Runnable {
         double sum = 0.0, sample;
         final int count = 10;
         int i = 0;
-        while (true) {
+        while (soundMonitor.isGoing()) {
             if (UserLocation.getLongitude() != 0 && UserLocation.getLatitude() != 0) {
-
+                Log.i("ContextService - LOC", UserLocation.getLatitude() + ", " + UserLocation.getLongitude());
                 sum = 0.0;
                 for (i = 0; i < count; i++) {
                     sample = soundMonitor.getSound();
