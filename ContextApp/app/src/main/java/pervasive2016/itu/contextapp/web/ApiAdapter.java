@@ -31,7 +31,7 @@ import pervasive2016.itu.contextapp.data.entity.ContextEntity;
 public class ApiAdapter<T> extends AsyncTask<URL, Long, T[]>{
     final static String remoteIP = "http://contextphone.appspot.com/";
     final static String localIP = "http://10.0.0.4:8888/";
-    final static String appIP = localIP;
+    final static String appIP = remoteIP;
 
     final Class<T> returnType;
     final WebMethod request_type;
