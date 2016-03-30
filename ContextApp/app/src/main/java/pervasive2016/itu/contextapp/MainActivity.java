@@ -187,6 +187,7 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                         }
                     }
                     else {
+                        //Beacon with set location - itu likely
                         boolean exists = false;
 
                         //iterate through existing beacons from ws
@@ -202,6 +203,7 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                             }
                         }
 
+                        //Create if not WS
                         if (!exists) {
                             //POST TO SERVER
                             //"uid","major","minor","lat", "lng"
