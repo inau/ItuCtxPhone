@@ -145,10 +145,7 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                                     b.getId2() + " " + b.getId3() + " distance = " + b.getDistance()
                     );
 
-                    //Beacon without location (non-itu most likely)
-                    if (bc.getLatitude() == null || bc.getLongtitude() == null) {
-                        boolean exists = false;
-
+                    //No WS results present
                         if (mListBeaconFromServer == null) {
                             runOnUiThread(
                                     new Runnable() {
@@ -160,6 +157,10 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                             );
                             return;
                         }
+                    //Beacon without location (non-itu most likely)
+                    if (bc.getLatitude() == null || bc.getLongtitude() == null) {
+                        boolean exists = false;
+
                         //iterate through existing beacons from ws
                         for (BeaconEntity be : mListBeaconFromServer) {
                             if (be.getKey().equals(bc.getKey())) { //IF exists in WS
@@ -184,6 +185,50 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                                 });
                             }
                         }
+                    }
+                    else {
+                        boolean exists = false;
+
+                        //iterate through existing beacons from ws
+                        for (BeaconEntity be : mListBeaconFromServer) {
+                            if (be.getKey().equals(bc.getKey())) { //IF exists in WS
+                                distances.put(be.getKey(), bc.getDistance());
+                                //update local values
+                                be.setDistance(bc.getDistance());
+                                be.setRssi(bc.getRssi());
+                                bc = be;
+                                exists = true;
+                                break;
+                            }
+                        }
+
+                        if (!exists) {
+                            //POST TO SERVER
+                            //"uid","major","minor","lat", "lng"
+                            String body =   "{" +
+                                    "\""+keys[0]+"\":\""+ bc.getUUID() +"\"," +
+                                    "\""+keys[1]+"\":\""+ bc.getMajor() +"\"," +
+                                    "\""+keys[2]+"\":\""+ bc.getMinor()+"\"," +
+                                    "\""+keys[3]+"\":\""+ bc.getLatitude() +"\"," +
+                                    "\""+keys[4]+"\":\""+ bc.getLongtitude() +"\"" +
+                                    "}";
+
+                            Log.i("WEB", "POST:ITU " + body);
+                            Map<String, String> headers = new HashMap<String, String>();
+                            headers.put("Content-Type", "application/json");
+
+                            try {
+                                new ApiAdapter<BeaconEntity>(ApiAdapter.WebMethod.POST,
+                                        headers,//headers or null
+                                        body,//body or null
+                                        MainActivity.this,
+                                        BeaconEntity.class
+                                ).execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.BEACONS, ""));
+                            } catch (MalformedURLException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
                     }
 
                     if (UserLocation.getNearestBeacon() == null) {
