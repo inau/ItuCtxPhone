@@ -32,14 +32,7 @@ public class TemperatureRunnable implements Runnable {
 
                 Log.i("ContextService - TEMP", tempMonitor.toString());
 
-                ContextEntity c = new ContextEntity(
-                        (long) UserLocation.getLatitude(),
-                        (long) UserLocation.getLongitude(),
-                        "ambient temperature",
-                        "" + tempMonitor.value
-                );
-                Gson gson = new Gson();
-                String body = gson.toJson(c);
+                String body = ApiAdapter.ctxJsonFactory(UserLocation.getLatitude(), UserLocation.getLongitude(), "ambient temperature", "" + tempMonitor.value);
                 try {
                     new ApiAdapter<ContextEntity>(ApiAdapter.WebMethod.POST, null, body, null, ContextEntity.class)
                             .execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.CONTEXTS, ""));

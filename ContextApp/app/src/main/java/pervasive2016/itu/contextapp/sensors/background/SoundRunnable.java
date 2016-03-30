@@ -44,14 +44,8 @@ public class SoundRunnable implements Runnable {
                     }
                 }
                 double value = sum / count; //average noise
-                ContextEntity c = new ContextEntity(
-                        UserLocation.getLatitude(),
-                        UserLocation.getLongitude(),
-                        "sound",
-                        "" + value
-                );
-                Gson gson = new Gson();
-                String body = gson.toJson(c);
+
+                String body = ApiAdapter.ctxJsonFactory(UserLocation.getLatitude(), UserLocation.getLongitude(), "sound", "" + value);
                 Log.i("Monitor Body", body);
                 try {
                     new ApiAdapter<ContextEntity>(ApiAdapter.WebMethod.POST, null, body, null, ContextEntity.class)

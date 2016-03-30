@@ -11,8 +11,19 @@
     android:orientation="vertical"
     tools:context="android.spvct.itu.dk.beacontest.MainActivity">
 
+    <TextView
+        android:layout_alignParentTop="true"
+        android:id="@+id/nearestBeaconLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No Beacon Detected"
+        android:textSize="20dip"
+        android:textColor="@color/colorPrimaryDark"
+        android:textAlignment="center"
+        />
+
         <ToggleButton
-            android:layout_alignParentTop="true"
+            android:layout_below="@id/nearestBeaconLabel"
             android:layout_centerHorizontal="true"
             android:id="@+id/toggleScan"
             android:textOn="Stop scanning"

@@ -12,8 +12,10 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.widget.PopupMenu;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -42,6 +44,7 @@ import java.util.Observer;
 import pervasive2016.itu.contextapp.data.UserLocation;
 import pervasive2016.itu.contextapp.data.entity.BeaconEntity;
 import pervasive2016.itu.contextapp.data.entity.ContextEntity;
+import pervasive2016.itu.contextapp.presentation.ActionFragment;
 import pervasive2016.itu.contextapp.presentation.StatsFragment;
 import pervasive2016.itu.contextapp.web.ApiAdapter;
 
@@ -56,8 +59,9 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
     String mClosestKey;
     ComponentName caller;
 
-    volatile String lastClick;
-    Map<String, BeaconEntity> markerData = new HashMap<>();
+    volatile Marker lastClick;
+    Map<Marker, BeaconEntity> markerData = new HashMap<>();
+    Marker relocateMarker = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,7 +98,7 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
         }
 
         if( caller != null ) return;
-        startService( new Intent(this, ContextService.class));
+        startService(new Intent(this, ContextService.class));
     }
 
     @Override
@@ -172,54 +176,72 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
             }
         }
 
-        updateUserLocation( location.getLatitude(), location.getLongitude() );
+        updateUserLocation(location.getLatitude(), location.getLongitude());
 
         centerOnLocation(new LatLng(location.getLatitude(), location.getLongitude()));
         googleMap.setOnIndoorStateChangeListener(this);
 
         if( caller != null ) {
-            final Intent i = LocationChangeActivity.this.getIntent();
-
             Toast.makeText(LocationChangeActivity.this,
                     "Do a long click on the map to set coordinates for the new beacon",
                     Toast.LENGTH_SHORT)
                     .show();
-
+        }
             googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
                 @Override
                 public void onMapLongClick(LatLng latLng) {
-                    i.putExtra(MainActivity.keys[3], latLng.latitude);
-                    i.putExtra(MainActivity.keys[4], latLng.longitude);
-                    setResult(RESULT_OK, i);
-                    finish();
+                    if (caller != null) {
+                        Intent i = LocationChangeActivity.this.getIntent();
+                        i.putExtra(MainActivity.keys[3], latLng.latitude);
+                        i.putExtra(MainActivity.keys[4], latLng.longitude);
+                        setResult(RESULT_OK, i);
+                        finish();
+
+                    } else {
+                        if (relocateMarker == null) {
+                            relocateMarker = googleMap.addMarker(new MarkerOptions()
+                                            .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_invisible))
+                                            .title("RelocateMarker")
+                                            .position(latLng)
+                            );
+                        } else relocateMarker.setPosition(latLng);
+                    }
+                    Log.i("CLICK", " "+latLng.latitude + ", " + latLng.longitude );
                 }
             });
-            return; //skip adding beacons
-        }
+
+        if( caller != null ) return;
 
         requestAllBeacons();
 
         googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                BeaconEntity be = markerData.get(marker.getId());
-                lastClick = marker.getId();
-                try {
-                    Log.i("Marker", "Request " + be.getLatitude().longValue() + " " + be.getLongtitude().longValue());
-                    ApiAdapter
-                            .getApihandlerCTX(LocationChangeActivity.this, null, ApiAdapter.WebMethod.GET)
-                            .execute(ApiAdapter
-                                            .urlBuilderFilter(ApiAdapter.APIS.CONTEXTS,
-                                                    be.getLatitude().longValue(),
-                                                    be.getLongtitude().longValue(),
-                                                    DayAgo()
-                                            )
-                            );
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
+                lastClick = marker;
+                if (relocateMarker != null && marker.getId().equals(relocateMarker.getId()))
+                    return false;
+
+                BeaconEntity be = markerData.get(marker);
+
+                //POPUP MENU
+                Double l, ll;
+                if (relocateMarker == null) {
+                    l = null;
+                    ll = null;
+                } else {
+                    l = relocateMarker.getPosition().latitude;
+                    ll = relocateMarker.getPosition().longitude;
+                    Log.i("CLICKV", "" + l + " " + ll);
                 }
+                ActionFragment.newInstance(LocationChangeActivity.this,
+                        l, ll,
+                        be,
+                        DayAgo().getTime()
+                ).show(getSupportFragmentManager(), "POP");
+
                 return false;
             }
+
         });
 
 
@@ -255,18 +277,25 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
     }
 
     public void clearMapMarkers() {
-        if(googleMap != null)
+        //googleMap.stopAnimation();
+        Log.i("CLR", "triggered");
+        if(googleMap != null){
+            Log.i("CLR", "triggered");
+            for (Marker m : markerData.keySet()) {
+                m.remove();
+            }
             markerData.clear();
             googleMap.clear();
+        }
     }
 
     private void addClosestBeacon(BeaconEntity be) {
         Marker m = googleMap.addMarker(new MarkerOptions()
                         .position(new LatLng(be.getLatitude(), be.getLongtitude()))
-                        .title(be.getMajor() + minorToRoom(be.getMinor()))
+                        .title(be.getName())
                         .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_online))
         );
-        markerData.put(m.getId(), be);
+        markerData.put(m, be);
     }
 
     public void addBeaconMarker(BeaconEntity beacon) {
@@ -284,43 +313,24 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
                     if(!((5 - Integer.parseInt( beacon.getMajor() )) == i)) return;
                     final Marker m = googleMap.addMarker(new MarkerOptions()
                                     .position(new LatLng(beacon.getLatitude(), beacon.getLongtitude()))
-                                    .title("" + beacon.getMajor() + minorToRoom(beacon.getMinor()))
-                                .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_invisible))
+                                    .title("" + beacon.getName())
+                                    .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_invisible))
                     );
-                    markerData.put(m.getId(), beacon);
+                    markerData.put(m, beacon);
                 }
 
             else {
                 final Marker m = googleMap.addMarker(new MarkerOptions()
                                 .position(new LatLng(beacon.getLatitude(), beacon.getLongtitude()))
-                                .title("" + beacon.getMajor() + minorToRoom(beacon.getMinor()))
+                                .title(beacon.getName())
                                 .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_invisible))
                 );
-                markerData.put(m.getId(), beacon);
+                markerData.put(m, beacon);
             }
             }
 
 
         }
-    }
-
-    private String minorToRoom(String minor) {
-        if(minor != null && minor.length() > 3)
-            switch (minor.substring(0, 1)) {
-                case "1":
-                    return "A" + minor.substring(1, 3);
-                case "2":
-                    return "B" + minor.substring(1, 3);
-                case "3":
-                    return "C" + minor.substring(1, 3);
-                case "4":
-                    return "D" + minor.substring(1, 3);
-                case "5":
-                    return "E" + minor.substring(1, 3);
-                default:
-                    return "bbbb";
-            }
-        else return "aaaa";
     }
 
     private Date DayAgo() {
@@ -340,14 +350,24 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
         if(data instanceof ContextEntity[] ) {
             ContextEntity[] res = (ContextEntity[]) data;
             BeaconEntity be = markerData.get(lastClick);
-            StatsFragment.newInstance(getApplicationContext(), be.getMajor()+minorToRoom(be.getMinor()), res).show(getSupportFragmentManager(), "");
+            if(be == null) return;
+            StatsFragment.newInstance(getApplicationContext(), be.getName(), res).show(getSupportFragmentManager(), "");
         }
         else if(data instanceof BeaconEntity[] ) {
             BeaconEntity[] res = (BeaconEntity[]) data;
-            Log.i("BCR", "#" + res.length );
-            for (BeaconEntity be : res)
+            if( res != null && res.length == 1 ) {
+                BeaconEntity last = markerData.get( lastClick );
+                if( last != null && last.equals( res[0] ) ) {
+                    requestAllBeacons();
+                    return;
+                }
+            }
+            clearMapMarkers();
+            for (BeaconEntity be : res) {
+                Log.i("BeaconsReceived", be.getLatitude() + " "+ be.getLongtitude() );
                 if( be.getKey().equals(mClosestKey) ) addClosestBeacon(be);
                 else addBeaconMarker(be);
+            }
         }
     }
 

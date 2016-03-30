@@ -55,11 +55,11 @@ public class ContextService extends Service {
         mSensorManager.registerListener( pressMonitor, pressSensor, SensorManager.SENSOR_DELAY_NORMAL );
         mSensorManager.registerListener( tempMonitor, tempSensor, SensorManager.SENSOR_DELAY_NORMAL );
 
-        tempThread = new Thread( new TemperatureRunnable(tempMonitor) );
-        pressThread = new Thread( new PressureRunnable(pressMonitor) );
+        tempThread = new Thread( new TemperatureRunnable(tempMonitor, 60000) ); //once per minute
+        pressThread = new Thread( new PressureRunnable(pressMonitor, 60000) );
 
         soundMonitor = new SoundMonitor( getFilesDir() );
-        soundThread = new Thread( new SoundRunnable(soundMonitor) );
+        soundThread = new Thread( new SoundRunnable(soundMonitor , 30000) ); //30 secs
 
         tempThread.start();
         pressThread.start();

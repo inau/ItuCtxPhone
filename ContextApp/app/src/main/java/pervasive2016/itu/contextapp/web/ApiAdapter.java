@@ -1,5 +1,6 @@
 package pervasive2016.itu.contextapp.web;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -29,6 +30,8 @@ import pervasive2016.itu.contextapp.data.entity.ContextEntity;
  */
 public class ApiAdapter<T> extends AsyncTask<URL, Long, T[]>{
     final static String remoteIP = "http://contextphone.appspot.com/";
+    final static String localIP = "http://10.0.0.4:8888/";
+    final static String appIP = localIP;
 
     final Class<T> returnType;
     final WebMethod request_type;
@@ -58,7 +61,7 @@ public class ApiAdapter<T> extends AsyncTask<URL, Long, T[]>{
         T[] responseData = null;
 
         try {
-            if(params[0]  == null) return responseData;
+            if(params[0] == null) return responseData;
             URL url = params[0];
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
@@ -87,7 +90,9 @@ public class ApiAdapter<T> extends AsyncTask<URL, Long, T[]>{
 
             if (conn.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 // Do normal input or output stream reading
-                InputStreamReader in = new InputStreamReader((InputStream) conn.getContent());
+                InputStream is = (InputStream) conn.getContent();
+                if(is == null) return responseData;
+                InputStreamReader in = new InputStreamReader( is );
 
                 Gson gson = new Gson();
                 JsonParser parser = new JsonParser();
@@ -97,6 +102,7 @@ public class ApiAdapter<T> extends AsyncTask<URL, Long, T[]>{
                     responseData = getReturnInstanceArray(rootArr.size());
                     for (int i = 0; i < rootArr.size(); i++) {
                         JsonObject element = rootArr.get(i).getAsJsonObject();
+                        Log.i("WEBAPI", ""+element.toString() );
                         responseData[i] = gson.fromJson(element, returnType);
                     }
                 } else if ( root.isJsonObject() ) {
@@ -141,8 +147,8 @@ public class ApiAdapter<T> extends AsyncTask<URL, Long, T[]>{
     }
 
     public enum APIS {
-        CONTEXTS(remoteIP+"r/contexts"),
-        BEACONS(remoteIP+"r/beacons");
+        CONTEXTS(appIP+"r/contexts"),
+        BEACONS(appIP+"r/beacons");
 
         final String url;
 
@@ -175,10 +181,38 @@ public class ApiAdapter<T> extends AsyncTask<URL, Long, T[]>{
     /****************************************************************************
      Helper methods for instantiating generic array and element for return types and URLS
      ****************************************************************************/
-    public static URL urlBuilderFilter(APIS api, long lat, long lng, Date d) throws MalformedURLException {
+    public static URL urlBuilderFilter(APIS api, Long lat, Long lng, Date d) throws MalformedURLException {
         String res;
         res = d == null ? "?lat="+lat+"&lng="+lng : "?lat="+lat+"&lng="+lng+"&after="+d.getTime();
+        Log.v("URL" , res);
         return new URL(api.getUrl() + res);
+    }
+    public static URL urlBuilderFilter(APIS api, double lat, double lng, Date d) throws MalformedURLException {
+        String res;
+        res = d == null ? "?lat="+lat+"&lng="+lng : "?lat="+lat+"&lng="+lng+"&after="+d.getTime();
+        Log.v("URL" , res);
+        return new URL(api.getUrl() + res);
+    }
+
+    public static URL urlBuilderFilter(APIS api, double lat, double lng, Date d, Integer range) throws MalformedURLException {
+        StringBuilder res = new StringBuilder();
+        res.append("?");
+        res.append("lat="+lat);
+        res.append("&lng="+lng);
+        if(d != null) res.append("&after="+d.getTime());
+        if(range != null) res.append("&rng="+range);
+        Log.v("URL" , res.toString());
+        return new URL(api.getUrl() + res.toString());
+    }
+
+    public static String ctxJsonFactory(double lat, double lng, String type, String values) {
+        String body = "{" +
+                "\"lat\":\"" + lat + "\"," +
+                "\"lng\":\"" + lng + "\"," +
+                "\"type\":\"" + type + "\"," +
+                "\"values\":\"" + values + "\"" +
+                "}";
+        return body;
     }
 
     public static URL urlBuilder(APIS api, String resource) throws MalformedURLException {

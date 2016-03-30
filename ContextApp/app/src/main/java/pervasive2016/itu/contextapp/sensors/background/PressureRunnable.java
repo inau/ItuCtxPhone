@@ -31,16 +31,8 @@ public class PressureRunnable implements Runnable {
             if (UserLocation.getLongitude() != 0 && UserLocation.getLatitude() != 0) {
 
                 Log.i("ContextService - PRESS", pressMonitor.toString());
-
-                ContextEntity c = new ContextEntity(
-                        (long) UserLocation.getLatitude(),
-                        (long) UserLocation.getLongitude(),
-                        "atmospheric pressure",
-                        "" + pressMonitor.value
-                );
-                Gson gson = new Gson();
-                String body = gson.toJson(c);
-                Log.i("Monitor Body", body);
+                String body = ApiAdapter.ctxJsonFactory(UserLocation.getLatitude(), UserLocation.getLongitude(), "atmospheric pressure", "" + pressMonitor.value);
+                Log.i("PRS Body", body);
                 try {
                     new ApiAdapter<ContextEntity>(ApiAdapter.WebMethod.POST, null, body, null, ContextEntity.class)
                             .execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.CONTEXTS, ""));
