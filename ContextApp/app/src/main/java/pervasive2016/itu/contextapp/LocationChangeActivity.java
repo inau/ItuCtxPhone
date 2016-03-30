@@ -59,6 +59,8 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
     String mClosestKey;
     ComponentName caller;
 
+    List<BeaconEntity> lastData;
+
     volatile Marker lastClick;
     Map<Marker, BeaconEntity> markerData = new HashMap<>();
     Marker relocateMarker = null;
@@ -152,29 +154,7 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
         // Enabling MyLocation Layer of Google Map
         googleMap.setMyLocationEnabled(true);
 
-        // Getting LocationManager object from System Service LOCATION_SERVICE
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-
-        // Creating a criteria object to retrieve provider
-        Criteria criteria = new Criteria();
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0.1f, this);
-
-        List<String> providers = locationManager.getProviders(true);
-        Location location = null;
-        for(String provider: providers){
-            Location l = locationManager.getLastKnownLocation(provider);
-            if(l == null){
-                continue;
-            }
-            if(location == null || l.getAccuracy() > location.getAccuracy()){
-                location = l;
-            }
-        }
+        Location location = UserLocation.getLocation(this);
 
         updateUserLocation(location.getLatitude(), location.getLongitude());
 
@@ -200,7 +180,7 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
                     } else {
                         if (relocateMarker == null) {
                             relocateMarker = googleMap.addMarker(new MarkerOptions()
-                                            .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_invisible))
+                                           // .icon(BitmapDescriptorFactory.fromResource(android.R.drawable.presence_invisible))
                                             .title("RelocateMarker")
                                             .position(latLng)
                             );
@@ -211,7 +191,6 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
             });
 
         if( caller != null ) return;
-
         requestAllBeacons();
 
         googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
@@ -261,6 +240,7 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
 
     private void requestNearbyBeacons() {
         try {
+            if(lastData != null) return;
             URL url = ApiAdapter.urlBuilderFilter(ApiAdapter.APIS.BEACONS,
                     (long) UserLocation.getLatitude(), (long) UserLocation.getLongitude(), null);
             Log.i("MarkFetch", url.getPath() + url.getQuery());
@@ -277,13 +257,12 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
     }
 
     public void clearMapMarkers() {
-        //googleMap.stopAnimation();
         Log.i("CLR", "triggered");
         if(googleMap != null){
             Log.i("CLR", "triggered");
-            for (Marker m : markerData.keySet()) {
-                m.remove();
-            }
+          //  for (Marker m : markerData.keySet()) {
+          //      m.remove();
+          //  }
             markerData.clear();
             googleMap.clear();
         }
@@ -356,9 +335,14 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
         else if(data instanceof BeaconEntity[] ) {
             BeaconEntity[] res = (BeaconEntity[]) data;
             if( res != null && res.length == 1 ) {
-                BeaconEntity last = markerData.get( lastClick );
-                if( last != null && last.equals( res[0] ) ) {
-                    requestAllBeacons();
+                BeaconEntity old = markerData.get( lastClick );
+                if( old != null && old.equals( res[0] ) ) {
+                    if(lastData == null) {
+                        requestAllBeacons();
+                        return;
+                    }
+                    lastData.remove(old);
+                    lastData.add(res[0]);
                     return;
                 }
             }

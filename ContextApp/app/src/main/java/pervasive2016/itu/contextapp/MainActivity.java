@@ -120,6 +120,7 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                     ApiAdapter.getApihandlerBCS(MainActivity.this, null, ApiAdapter.WebMethod.GET)
                             .execute(ApiAdapter.urlBuilder(ApiAdapter.APIS.BEACONS, ""));
                 } catch (MalformedURLException e) {
+                    Log.e("WEB", "Malfurmed url");
                     e.printStackTrace();
                 }
     }
@@ -272,9 +273,17 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
         if( requestCode == NEW_BEACON_ACTIVITY ) {
             if(resultCode != RESULT_OK) return;
             Bundle ex = data.getExtras();
-            BeaconEntity be = mListViewAdapter.getItem(ex.getInt("pos"));
+            final BeaconEntity be = mListViewAdapter.getItem(ex.getInt("pos"));
             Log.i("CS", be.equals( newBeacons.get(0) )+"" );
-            newBeacons.remove( be );
+            runOnUiThread(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            newBeacons.remove( be );
+                            mListViewAdapter.notifyDataSetChanged();
+                        }
+                    }
+            );
             try{
                 Log.i("RESULT", "Received activity result");
                 String body =   "{" +
@@ -317,15 +326,6 @@ public class MainActivity extends Activity implements BeaconConsumer, Observer {
                 mListViewAdapter = new ListViewAdapter(this.getBaseContext(), newBeacons);
                 mListView.setAdapter(mListViewAdapter);
             }
-            runOnUiThread(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            mListViewAdapter.notifyDataSetChanged();
-                        }
-                    }
-
-            );
 
             for (BeaconEntity be : mListBeaconFromServer) {
                 Log.i("WEB FOUND ", be.getKey()+" ("+ be.getLatitude() + ", " + be.getLongtitude() + ")");

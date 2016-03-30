@@ -46,13 +46,11 @@ public class BeaconEntity {
         Minor = s;
     }
     public void setLatitute(Double s){
-
-        Longitude = s;
+        Latitude = s;
     }
 
     public void setLongitude(Double s){
-
-        Latitude = s;
+        Longitude = s;
     }
 
 
