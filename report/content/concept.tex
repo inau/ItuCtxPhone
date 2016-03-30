@@ -1,2 +1,15 @@
 \section{System Description}
 
+The system is composed of four major components:
+\begin{itemize}
+\item the map activity
+\item the ibeacon scanner
+\item the context service
+\item the cloud based infrastructure
+\end{itemize}
+
+\textbf{Map Activity.} The map activity is responsible of locating the user's position and displaying it to a map. To the map are also displayed the positions of known beacons. The closest beacon is displayed in green while the others are grey. Every beacon has some context informations attached, that can also be viewed on the map by touching the chosen beacon.\\
+\textbf{iBeacon scanner.} The iBeacon scanner is activated by the user, and uses Bluetooth Low Energy technology to scan for iBeacons near the user. The found beacons are then displayed to the user only when they are not known to the system. At this point is the user choice to store their information, providing a custom location by long pressing on the map. \\
+\textbf{Context Service.} The context service runs in the background of the map activity, and is responsible to collect context information about the user's location and send it to the cloud. \\
+\textbf{Cloud Based Infrastructure. }  A cloud based storage system is been developed using Google App Engine, that implements CRUD operations on beacon and context information based on REST requests.
+
