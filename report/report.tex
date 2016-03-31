@@ -94,7 +94,7 @@ The system has been designed to work over the existing iBeacon infrastructure at
 The \textit{map activity} is responsible of locating the user's position and displaying it to a map.  
 On the presented map the user of the application can see the positions of iBeacons that are known to the system.
 
-The iBeacon that is closest to the user is displayed as a green dot, while the others are grey dots. 
+The iBeacon that is closest to the user is displayed as a green dot, while the others as grey dots. 
 Every beacon has some context information attached, that can also be viewed on the map by clicking on the map marker.
 
 \begin{figure}[!h]
@@ -102,13 +102,13 @@ Every beacon has some context information attached, that can also be viewed on t
 \includegraphics[width=0.3\columnwidth]{images/figure1}
 \includegraphics[width=0.3\columnwidth]{images/figure2}
 \includegraphics[width=0.3\columnwidth]{images/figure3}
-\caption{The user location and the iBeacons position are displayed on the map.
-It is also possible to select the different floor levels from the building.}
+\caption{The user location and the iBeacon positions are displayed on the map.
+It is also possible to select the different floor levels of the building.}
 \label{fig:figure2}
 \end{figure}
 
 The \textit{iBeacon scanner} is activated by the user, and uses Bluetooth Low Energy technology to scan for iBeacons near the device.
-The found beacons are then displayed to the user on list, but only in case they are not known to the system.
+The found beacons are then displayed to the user on a list, but only in case they are not known to the system.
 At this point it is the user's choice to store their information on the system, providing a custom location by long pressing on the map. \\
 
 The \textit{context service} runs in the background of the map activity, and is responsible of collecting context information about the user's location and send it to the cloud infrastructure.
@@ -163,7 +163,7 @@ The sound monitor records sound through the device's microphone over short inter
 Once that the context information is available, it is sent to the web service together with the location where that information was recorded (the user location).
 
 \subsection{Beacon Mapping}
-The Beacon is a proximity-based location using the Bluetooth discovery protocol.
+A Beacon is a device using a Bluetooth protocol to provide some information.
 Typically, an iBeacon can transmit Universally Unique Identifier (UUID), Major, Minor, Distance from the device to the Beacon, Received Signal Strength Indicator (RSSI), etc.
 In order to detect the Beacon, the Android device should support Bluetooth Low Energy (BLE) and Android 4.3+.
 We use Android Beacon Library which provide APIs to interact with Beacons, specifically for monitoring and ranging iBeacons nearby.
@@ -184,12 +184,12 @@ In this assignment, we combine these providers in order to make the location est
 \section{Discussion}
 Throughout this project some system design choices have
 been made. In the following there will be reflected upon some of these choices and 
-what could have been different in terms of the technical implementation
- as well as the conceptual, and what would be
-changed if more time was given. \\
+what could have been done differently in terms of the technical implementation
+ as well as the concept.\\
 
 \textbf{Google App Engine. }\\
-...\\
+We had some hurdles working with the GAE. Especially accessing the database and monitoring data. While the google developer console actually does provide these tools they are hard to find. If we were to do the same type of service we might use another PaaS or create our own consisting of servlet compatible webserver and a relational database.
+To get more control of the webservice and avoid the limitations that GAE has. These  limitations could also be avoided by actually paying for the GAE service.\\
 
 \textbf{Sensors Update Interval. } \\
 In the beginning of the project, the interval for scanning context was initially set to one scan every 10 seconds, for each sensor. This produced an enormous amount of data to be sent to the cloud service, and contributed to the reach of the quotas of Google services.
