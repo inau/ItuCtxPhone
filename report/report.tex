@@ -182,6 +182,26 @@ There are many methods for estimating the current location: GPS, Assisted GPS, c
 Each provider has its own advantages and limitation, for example: GPS provides high precision but low speed and consumes more power while using Wi-Fi we receive medium precision but the process is faster and devices consume less power \cite{LaMarca:2008:LS, Constandache:2010:TMPLWWD}.
 In this assignment, we combine these providers in order to make the location estimation more accurate as well as to utilize the advantages of such providers together. 
 \section{Discussion}
+Throughout this project some system design choices have
+been made. In the following there will be reflected upon some of these choices and 
+what could have been different in terms of the technical implementation
+ as well as the conceptual, and what would be
+changed if more time was given. \\
+
+\textbf{Google App Engine. }\\
+...\\
+
+\textbf{Sensors Update Interval. } \\
+In the beginning of the project, the interval for scanning context was initially set to one scan every 10 seconds, for each sensor. This produced an enormous amount of data to be sent to the cloud service, and contributed to the reach of the quotas of Google services.
+In the final implementation, the interval length was set to one minute instead.\\ After further thinking, even the 1 minute interval seems too short for the detection of some context information. In particular, ambient temperature and atmospheric pressure present values that are easily consistent over time, and don't change rapidly. For those kinds of monitoring larger interval of times seem a more efficient choice.\\ 
+
+\textbf{Sound Level. }\\
+The sound level is measured in our implementation using Android's MediaRecorder.getMaxAmplitude() function.
+Even if the documentation is uncertain about the exact internal working of it, doing some research it appears that the values returned by the function probably represent a 16-bit digitalisation of the electrical output from 0-100\% maximum voltage range of the microphone. Since even in the same brand the microphones may vary in their precision range, it is  not clear wether even similar phones will return the same value given the same distance to the same sound source.
+Even if the values are not represented in a known unit of measure, they however correlate to sound pressure in Pascal since it's also a linear quantisation of the sound pressure, in the area where sound can be measured with the given microphone (which will not cover the entire spectrum due to the phones limitations).\\
+
+\textbf{User Location. }\\
+One topic that has been discussed is how to improve to user ('s device) localisation. Having some more time (and perhaps precision in the infrastructure) we would have opted for assigning the user to the closest known iBeacon, if any, with the goal of increasing the precision level of the localisation to the Bluetooth LE range instead that using GPS precision.
 
 % Balancing columns in a ref list is a bit of a pain because you
 % either use a hack like flushend or balance, or manually insert
