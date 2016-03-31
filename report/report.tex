@@ -76,7 +76,7 @@ Pervasive Computing, Context Aware, Smartphone, Networking, Google App Engine, A
 \category{H.5.m.}{Information interfaces and presentation (e.g., HCI)}{Miscellaneous}
 
 \section{Introduction}
-This report is part of the first mandatory assignment in the course Pervasive Computing at the IT-University of Copenhagen (ITU), relating to the subject of context aware systems.
+This report is part of the first mandatory assignment in the course Pervasive Computing at the IT-University of Copenhagen (ITU), relating to the subject of context aware systems \cite{Schilit:1994:CACA}.
  The purpose of this project is to create a mobile application for Android, supported by ITU iBeacon infrastructure and by a  cloud based service, able to sense, store, and show context information about geographic locations. 
  
  \section{System Description}
@@ -91,9 +91,29 @@ The system is composed of four major components:
 The system has been designed to work over the existing iBeacon infrastructure of IT University, recognising automatically the iBeacons used in the building.
 
 \textbf{Map Activity.} The map activity is responsible of locating the user's position and displaying it to a map.  On the map the user of the application can see the positions of iBeacons that are known to the system. The iBeacon that is closest to the user is displayed in green, while the others are grey. Every beacon has some context informations attached, that can also be viewed on the map by clicking on the map marker.\\
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.3\columnwidth]{images/figure1}
+\includegraphics[width=0.3\columnwidth]{images/figure2}
+\includegraphics[width=0.3\columnwidth]{images/figure3}
+\caption{The user location and the iBeacons position are displayed on the map.
+It is also possible to select the different floor levels from the building.}
+\label{fig:figure2}
+\end{figure}
+
 \textbf{iBeacon scanner.} The iBeacon scanner is activated by the user, and uses Bluetooth Low Energy technology to scan for iBeacons near the device. The found beacons are then displayed to the user on list, but only in case they are not known to the system. At this point it is the user choice to store their information on the system, providing a custom location by long pressing on the map. \\
 \textbf{Context Service.} The context service runs in the background of the map activity, and is responsible of collecting context information about the user's location and send it to the cloud infrastructure. The entire process is automated and doesn't require the user's interaction. \\
 The context information obtained is of three types: atmospheric pressure, ambient temperature, and level of sound. This informations are supposed to support the student-user in decisions he may face that involve knowledge of the surrounding environment. For example, information about sound or temperature may help one decide wether some place is ideal for studying, while atmospheric pressure could be used, by the user himself or by some other service, to  determine weather conditions and likelihood of rain. \\
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.3\columnwidth]{images/figure4}
+\includegraphics[width=0.3\columnwidth]{images/figure5}
+\caption{Context information is displayed when clicking on the location.}
+\label{fig:figure1}
+\end{figure}
+
 \textbf{Cloud Based Infrastructure. }  A cloud based storage system is been developed using Google App Engine, that implements CRUD operations on beacon and context information based on REST requests.
 
 \section{Technical Implementation}
@@ -185,13 +205,9 @@ If the iBeacon is not stored,we will store it by sending a POST request to serve
 To find the closest iBeacon, we iterate through the list of available iBeacons to calculate the iBeacon that has the smallest distance to the Android device. After that, we show the position of closest iBeacon and current position of user together on Google Map.
 
 There are many methods for estimating the current location: GPS, Assisted GPS, cell towers and Wi-Fi fingerprint.
-Each provider has its own advantages and limitation, for example: GPS provides high precision but low speed and consumes more power while using Wi-Fi we receive medium precision but the process is faster and devices consume less power.
+Each provider has its own advantages and limitation, for example: GPS provides high precision but low speed and consumes more power while using Wi-Fi we receive medium precision but the process is faster and devices consume less power \cite{LaMarca:2008:LS, Constandache:2010:TMPLWWD}.
 In this assignment, we combine these providers in order to make the location estimation more accurate as well as to utilize the advantages of such providers together. 
 \section{Discussion}
-
-\section{References}
-
-\section{Appendix}
 
 
 % Balancing columns in a ref list is a bit of a pain because you
@@ -220,4 +236,6 @@ In this assignment, we combine these providers in order to make the location est
 % \small
 \bibliographystyle{acm-sigchi}
 \bibliography{ubicomp}
+\section{Appendix}
+
 \end{document}
