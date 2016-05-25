@@ -1,0 +1,58 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical">
+
+<com.inau.gstur.gesturepresenter.Gestures.ScrollableImageView
+    android:id="@+id/image"
+    android:scaleType="center"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    />
+
+    <Button
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:id="@+id/g_up"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        />
+    <Button
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:id="@+id/g_down"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        />
+    <Button
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:id="@+id/g_left"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        />
+    <Button
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:id="@+id/g_right"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        />
+
+    <Button
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:id="@+id/g_tiltR"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        />
+    <Button
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:id="@+id/g_tiltL"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        />
+
+</RelativeLayout>
+

@@ -97,7 +97,7 @@ public class ActionFragment extends DialogFragment {
                     Double ll = ex.getDouble(keys[4]);
                     Log.i("CLICKAF", "Request B " + l + " " + ll);
 
-                    ApiAdapter
+/**                    ApiAdapter
                             .getApihandlerCTX(((Observer) c), null, ApiAdapter.WebMethod.GET)
                             .execute(ApiAdapter
                                             .urlBuilderFilter(ApiAdapter.APIS.CONTEXTS,
@@ -105,7 +105,14 @@ public class ActionFragment extends DialogFragment {
                                                     ll,
                                                     new Date(times)
                                             )
+                            ); */
+                    ApiAdapter
+                            .getApihandlerCTX(((Observer) c), null, ApiAdapter.WebMethod.GET)
+                            .execute(ApiAdapter
+                                            .urlBuilder(ApiAdapter.APIS.CONTEXTS, "")
                             );
+
+
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 }

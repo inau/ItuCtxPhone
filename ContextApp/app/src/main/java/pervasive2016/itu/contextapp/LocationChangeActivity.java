@@ -343,6 +343,7 @@ public class LocationChangeActivity extends FragmentActivity implements GoogleMa
                     }
                     lastData.remove(old);
                     lastData.add(res[0]);
+                    relocateMarker = null;
                     return;
                 }
             }
