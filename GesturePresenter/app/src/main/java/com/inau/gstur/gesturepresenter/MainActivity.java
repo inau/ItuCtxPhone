@@ -17,37 +17,46 @@
 package com.inau.gstur.gesturepresenter;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 
-import com.inau.gstur.gesturepresenter.Gestures.BluetoothGestureListener;
+import com.inau.gstur.gesturepresenter.Comms.GestureService;
+import com.inau.gstur.gesturepresenter.Gestures.GestureListener;
 import com.inau.gstur.gesturepresenter.Gestures.GestureOverlay;
 import com.inau.gstur.gesturepresenter.Gestures.ScrollableImageView;
 
-public class MainActivity extends Activity implements BluetoothGestureListener {
+public class MainActivity extends Activity implements GestureListener {
     private ScrollableImageView mGraphView;
     private GestureOverlay go;
+    protected static GestureListener reference;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         mGraphView = (ScrollableImageView) findViewById(R.id.image);
-        mGraphView.setImageDrawable(getDrawable(R.drawable.one));
+        mGraphView.setSources(new Drawable[]{
+                getDrawable(R.drawable.bone1),
+                getDrawable(R.drawable.bone2),
+                getDrawable(R.drawable.bone3)
+        });
+
+        reference = this;
+
+        startService(new Intent(this, GestureService.class));
         go = new GestureOverlay(this, this);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        super.onCreateOptionsMenu(menu);
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
+    public static GestureListener getBTRef() {
+        return reference;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        return super.onOptionsItemSelected(item);
+    protected void onDestroy() {
+        super.onDestroy();
+        stopService(new Intent(this, GestureService.class));
+        reference = null;
     }
 
     @Override
@@ -65,10 +74,10 @@ public class MainActivity extends Activity implements BluetoothGestureListener {
             case RIGHT:
                 mGraphView.pan(gesture);
                 break;
-            case TILT_LEFT:
+            case TILTL:
                 mGraphView.zoom(-1);
                 break;
-            case TILT_RIGHT:
+            case TILTR:
                 mGraphView.zoom(1);
 
         }

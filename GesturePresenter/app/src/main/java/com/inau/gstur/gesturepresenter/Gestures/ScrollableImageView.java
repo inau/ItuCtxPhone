@@ -2,11 +2,13 @@ package com.inau.gstur.gesturepresenter.Gestures;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 /**
  * Created by Ivan on 24-May-16.
@@ -15,7 +17,8 @@ public class ScrollableImageView extends ImageView {
 
     private static final int INVALID_POINTER_ID = -1;
 
-        private float PAN_FACTOR = 25;
+        final protected float PAN_FACTOR = 100;
+        final protected int block_size = 10;
 
         private float mPosX;
         private float mPosY;
@@ -29,6 +32,9 @@ public class ScrollableImageView extends ImageView {
         private ScaleGestureDetector mScaleDetector;
         private float mScaleFactor = 1.f;
 
+        private Drawable[] mSources;
+        private int currDrawable;
+
         public ScrollableImageView(Context context, AttributeSet attrs) {
             this(context, attrs, 0);
             mScaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
@@ -37,6 +43,32 @@ public class ScrollableImageView extends ImageView {
         public ScrollableImageView(Context context, AttributeSet attrs, int defStyle) {
             super(context, attrs, defStyle);
             mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
+        }
+
+        public void setSources(Drawable[] sources) {
+            this.mSources = sources;
+            this.currDrawable = 0;
+            reloadImage();
+        }
+
+        public void nextDrawable() {
+            currDrawable = (currDrawable+1) % mSources.length;
+            reloadImage();
+        }
+
+        public void prevDrawable() {
+            currDrawable--;
+            if( currDrawable < 0 ) currDrawable = mSources.length-1;
+            reloadImage();
+        }
+
+        private void reloadImage() {
+            this.setImageDrawable( mSources[currDrawable] );
+
+            this.mPosX = this.getWidth() / 4;;
+            this.mPosY = this.getHeight() / 4;;
+            zoom(1);
+            invalidate();
         }
 
         @Override
@@ -160,29 +192,44 @@ public class ScrollableImageView extends ImageView {
             canvas.restore();
         }
 
-    public void pan(BluetoothGestureListener.Gesture gesture) {
+    public void pan(GestureListener.Gesture gesture) {
+        if(mScaleFactor < 0.5) {
+            switch (gesture) {
+                case LEFT:
+                    prevDrawable();
+                    break;
+                case RIGHT:
+                    nextDrawable();
+                    break;
+            }
+        }
         switch (gesture) {
             case LEFT:
-                this.mPosX += PAN_FACTOR;
+                if(this.mPosX < block_size*PAN_FACTOR) this.mPosX += PAN_FACTOR;
                 break;
             case RIGHT:
-                this.mPosX -= PAN_FACTOR;
+                if(this.mPosX > -block_size*PAN_FACTOR) this.mPosX -= PAN_FACTOR;
                 break;
             case UP:
-                this.mPosY += PAN_FACTOR;
+                if(this.mPosY < block_size*PAN_FACTOR) this.mPosY += PAN_FACTOR;
                 break;
             case DOWN:
-                this.mPosY -= PAN_FACTOR;
+                if(this.mPosY > -block_size*PAN_FACTOR) this.mPosY -= PAN_FACTOR;
                 break;
             case IDLE:
                 break;
         }
+        Log.i("pan", mPosX+" "+mPosY);
         invalidate();
     }
 
     public void zoom(int i) {
-        if(i > 0 && mScaleFactor < 10) mScaleFactor *= 1.1;
-        else if (i<0) mScaleFactor *= 0.9;
+        if(i > 0 && mScaleFactor < 5) mScaleFactor *= 1.1;
+        else if (i<0)   if(mScaleFactor > 0.5) mScaleFactor *= 0.9;
+                        else {
+                            Toast.makeText(getContext(), "Pan to swap image", Toast.LENGTH_SHORT).show();
+                        }
+        Log.i("scale", ""+mScaleFactor);
         invalidate();
     }
 

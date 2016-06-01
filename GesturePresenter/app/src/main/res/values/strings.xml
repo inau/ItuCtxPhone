@@ -15,7 +15,7 @@
   -->
 
 <resources>
-    <string name="app_name">Interactive Chart Demo</string>
+    <string name="app_name">Pervasive Gesture Presenter</string>
     <string name="app_description">A sample application that allows you to navigate a simple line graph using touch gestures.</string>
     <string name="action_zoom_in">Demo zoom in</string>
     <string name="action_zoom_out">Demo zoom out</string>
